@@ -15,7 +15,7 @@ module{
     //     chromosomes: Map.Map<Nat, Chromosome>;
     // };
 
-    // public type CreatureDataInit = { 
+    // public type CritterDataInit = { 
     //     genomeSize: Nat8;
     //     chromosomeSize: Nat8;
     //     geneSize: Nat8;
@@ -27,13 +27,13 @@ module{
         fromDate: Int;
     }>;
 
-    public type CreatureId = Nat;
+    public type CritterId = Nat;
 
-    public type Creature = {
-        id: CreatureId;
-        parent_a: CreatureId;
-        parent_b: CreatureId;
-        childs: [CreatureId];
+    public type Critter = {
+        id: CritterId;
+        parent_a: CritterId;
+        parent_b: CritterId;
+        childs: [CritterId];
         dateBorn: Int;
         generation: Nat;
         owner: Principal;
@@ -43,19 +43,28 @@ module{
 
     public type Genome = [Nat8];
 
+    type Account = { owner: Principal ; subaccount: ?Blob};
+
     public type User = {
         name: Text;
+        photo: ?Blob;
+        wallet: ?Account;
+        email: ?Text;
         registrationDate: Int;
-        creaturesId: [Nat];      
+        crittersId: [Nat];      
+    };
+
+    public let userDefault: User = {
+        name: Text = "";
+        photo: ?Blob = null;
+        wallet: ?Account = null;
+        email: ?Text = null;
+        registrationDate: Int = 0;
+        crittersId: [Nat] = [];
     };
 
     public type SignInResult = {
         #Ok: User;
-        // {
-        //     name: Text;
-        //     creatures: [Creature];
-        //     registrationDate: Int
-        // };
         #Err: Text;
     };
 

@@ -6,7 +6,11 @@ const LogoutButton: React.FC = () => {
     const { logout } = useContext(SessionContext);
 
     return (
-        <button className="button" onClick={logout}>Log out</button>
+        <button 
+            className="button"
+            style={{width: "100px"}}
+            onClick={logout}>Disconnect
+        </button>
     );
 };
 

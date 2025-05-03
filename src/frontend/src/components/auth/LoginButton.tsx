@@ -6,7 +6,12 @@ const LoginButton: React.FC = () => {
     const { login } = useContext(SessionContext);
 
     return (
-        <button translate="no" className="button" onClick={login}>Log in</button>
+        <button
+            style={{width: "100px"}}
+            translate="no" 
+            className="button" 
+            onClick={login}>Connect
+        </button>
     );
 };
 

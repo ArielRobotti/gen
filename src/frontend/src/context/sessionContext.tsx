@@ -71,7 +71,7 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
         setUser(dataUser.Ok)
       } else {
         setUser(null)
-      }
+              }
     };
     getUser()
   }, [isAuthenticated, backend]);
@@ -89,7 +89,6 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
   const updateUser = (user: User) => {
     setUser(user);
   }
-
 
   const handleLoginClick = () => {
     setIsModalOpen(true);
@@ -114,6 +113,7 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
   };
 
   const logout = async () => {
+    setUser(null);
     const authClient = await AuthClient.create();
     await authClient.logout();
     setIdentity(new AnonymousIdentity());
