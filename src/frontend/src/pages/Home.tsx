@@ -110,7 +110,7 @@ const Home = () => {
           className="text-lg text-white px-6 py-3 rounded-xl animate-heartbeat bg-[#022469d0]"
           onClick={handleClickMint}
         >
-          🔥 ¡Crea tu propio Critter ahora!
+          🔥 ¡Bring your own Critter to life!
         </button>
       </div>
       <audio ref={audioRef} src="/Lore.en.mp3" preload="auto" />
