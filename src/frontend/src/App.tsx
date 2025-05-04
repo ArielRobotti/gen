@@ -9,6 +9,8 @@ import './App.css';
 
 function App() {
   return (
+    <div className="h-[400vh]">
+
     <SessionProvider>
       <BrowserRouter>
         <Routes>
@@ -20,6 +22,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </SessionProvider>
+    </div>
   );
 }
 

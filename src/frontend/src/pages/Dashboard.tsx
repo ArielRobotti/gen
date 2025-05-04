@@ -7,15 +7,16 @@ const Dashboard = () => {
   const { backend } = useSession();
   const [critters, setCritters] = useState<Critter[]>([])
 
-
-
-
   useEffect(() => {
     const fecthCritters = async () => {
       setCritters(await backend.getMyCritters());
     }
     fecthCritters();
   }, [backend]);
+
+  useEffect(() => {
+    console.log("Critters:", critters[0]);
+  }, [critters]);
 
   return (
     <div className="dashboard text-white">

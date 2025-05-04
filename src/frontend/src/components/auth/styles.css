@@ -70,27 +70,3 @@
 
 }
 
-@media (max-width: 768px) {
-    .button { min-width: 50px; }
-}
-
-@keyframes float {
-
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
-}
-
-.animate-float {
-    animation: float 8s ease-in-out infinite;
-}
-
-@keyframes heartbeat {
-  0%, 100% { transform: scale(1); }
-  25% { transform: scale(1.01); }
-  50% { transform: scale(1); }
-  75% { transform: scale(1.01); }
-}
-
-.animate-heartbeat {
-  animation: heartbeat 4s ease-in-out infinite;
-}
