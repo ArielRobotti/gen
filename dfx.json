@@ -3,12 +3,14 @@
     "backend": {
       "main": "src/gen_backend/main.mo",
       "type": "motoko",
+      "specified_id": "dkqz3-3yaaa-aaaak-quhaa-cai",
       "declarations": {
         "output": "./src/frontend/src/declarations/backend"
       }
     },
     
     "frontend": {
+      "specified_id": "dnr7p-waaaa-aaaak-quhaq-cai",
       "dependencies": [
         "backend"
       ],

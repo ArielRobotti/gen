@@ -1,5 +1,7 @@
 // import Map "mo:map/Map";
 import List "mo:base/List";
+import Principal "mo:base/Principal";
+
 
 module{
 
@@ -31,6 +33,7 @@ module{
 
     public type Critter = {
         id: CritterId;
+        name: Text;
         parent_a: CritterId;
         parent_b: CritterId;
         childs: [CritterId];
@@ -46,6 +49,7 @@ module{
     type Account = { owner: Principal ; subaccount: ?Blob};
 
     public type User = {
+        principal: Principal;
         name: Text;
         photo: ?Blob;
         wallet: ?Account;
@@ -54,19 +58,32 @@ module{
         crittersId: [Nat];      
     };
 
-    public let userDefault: User = {
-        name: Text = "";
-        photo: ?Blob = null;
-        wallet: ?Account = null;
-        email: ?Text = null;
-        registrationDate: Int = 0;
-        crittersId: [Nat] = [];
+    public func userDefault(): User {
+        return {
+            principal = Principal.fromText("2vxsx-fae");
+            name: Text = "";
+            photo: ?Blob = null;
+            wallet: ?Account = null;
+            email: ?Text = null;
+            registrationDate: Int = 0;
+            crittersId: [Nat] = [];
+        };
     };
+
 
     public type SignInResult = {
         #Ok: User;
         #Err: Text;
     };
+
+    public type PublicInfo = {
+        usersQty: Nat;
+        adminsQty: Nat;
+        crittersByGeneration: [(Nat, {births : Nat; deaths : Nat})];
+        birthsLastWeek: Nat;
+        deathsLastWeek: Nat;
+    };
+
 
 
 }
