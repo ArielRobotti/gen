@@ -7,7 +7,7 @@ const LoginButton: React.FC = () => {
 
     return (
         <button
-            style={{width: "100px"}}
+            style={{width: "90px"}}
             translate="no" 
             className="button" 
             onClick={login}>Connect

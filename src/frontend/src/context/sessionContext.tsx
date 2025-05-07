@@ -5,9 +5,9 @@ import { createActor } from "../declarations/backend";
 import { AuthClient } from '@dfinity/auth-client';
 import ModalProviderSelect from '../components/auth/ModalProviderSelect';
 
-const canisterId = import.meta.env.VITE_CANISTER_ID as string
+const canisterId = import.meta.env.VITE_CANISTER_ID_BACKEND as string
 const host = import.meta.env.VITE_DFX_NETWORK === "local" ? "http://localhost:4943/?canisterId=rdmx6-jaaaa-aaaaa-aaadq-cai" : "https://identity.ic0.app";
-console.log(canisterId)
+
 
 type SessionContextType = {
   user: User | null;

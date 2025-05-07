@@ -1,11 +1,13 @@
 .button {
     background-color: #2650aa;
+    /* background-color: #00e5ff; */
+    box-shadow: -4px 3px 10px  rgba(66, 245, 11, 0.288);
     /* Color de fondo verde */
     color: white;
     /* Color del texto blanco */
     border: none;
     /* Sin borde */
-    padding: 5px 0px;
+    padding: 5px px;
     /* Espaciado interno */
     text-align: center;
     /* Centrar texto */
@@ -19,18 +21,19 @@
     /* Margen */
     cursor: pointer;
     /* Cambia el cursor al pasar el mouse */
-    border-radius: 5px;
+    border-radius: 16px;
     /* Bordes redondeados */
-    transition: background-color 0.3s;
+    transition: background-color 0.5s;
+    transition: box-shadow 0.5s;
     /* Transición suave */
-    box-shadow: 2px 2px 10px rgba(221, 137, 59, 0.363);
-    min-width: 80px;
+    /* box-shadow: 2px 2px 10px rgba(221, 137, 59, 0.3); */
+    min-width: 90px;
     height: 36px;
 
 }
 
 .button:hover {
-    box-shadow: 3px 3px 10px rgba(221, 218, 59, 0.418);
+    box-shadow: -4px 3px 10px rgba(81, 255, 1, 0.473);
     background-color: #4a79dd;
     /* Color de fondo al pasar el mouse */
 }

@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "./layout/MainLayout";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
+import Void from "./pages/Void"
 
 import './App.css';
 
@@ -17,7 +18,8 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            
+            <Route path="/space" element={<Void />} />
+            <Route path="*" element={<Home />} />
           </Route>
         </Routes>
       </BrowserRouter>

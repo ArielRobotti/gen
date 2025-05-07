@@ -8,7 +8,7 @@ const LogoutButton: React.FC = () => {
     return (
         <button 
             className="button"
-            style={{width: "100px"}}
+            style={{width: "90px"}}
             onClick={logout}>Disconnect
         </button>
     );
