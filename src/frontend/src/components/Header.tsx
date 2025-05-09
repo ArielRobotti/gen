@@ -5,9 +5,10 @@ import LoginButton from './auth/LoginButton';
 import LogoutButton from './auth/LogoutButton';
 import RegisterButton from './register/RegisterButton';
 import { useNavigate } from 'react-router-dom';
+import { HomeIcon, BellIcon, MetricsIcon } from "./Icons";
 
 const Header = () => {
-  const { user, isAuthenticated, identity, backend,  updateUser } = useSession();
+  const { user, isAuthenticated, identity, backend, updateUser } = useSession();
   const [showModalRegister, setShowModalRegister] = useState(false);
   const [name, setName] = useState("");
   const navigate = useNavigate();
@@ -15,11 +16,11 @@ const Header = () => {
   useEffect(() => {
     if (!isAuthenticated) {
       setShowModalRegister(false);
-      navigate("/")
+      // navigate("/")
       return;
     }
     const timeout = setTimeout(() => {
-      if(!user){
+      if (!user) {
         setShowModalRegister(true);
         navigate("/")
       };
@@ -47,22 +48,22 @@ const Header = () => {
   }
 
   return (
-    <header className="w-full flex justify-between items-center p-1 bg-gradient-to-t from-[#00000000] to-blue-800 pb-4 text-white select-none">
-      <button
-        className="button"
-        onClick={() => navigate("/")}
-      >
-        HOME
-      </button>
-      <div className="flex-1"/>
-      <h1 className="text-[18px] sm:text-2xl font-bold text-center flex-1">CryptoCritters</h1>
+    <header className="w-full flex justify-between items-center p-1 bg-gradient-to-t from-[#00000000] to-blue-800 pb-4 text-white select-none h-[60px]">
+      <HomeIcon onClick={() => navigate("./")} className='ml-4'/>
+      <MetricsIcon onClick={() => navigate("./metrics")} className='ml-4'/>
+
+
+      <div className="flex-1 md:flex-2" />
+      <h1 className="hidden sm:block text-[18px] sm:text-2xl font-bold text-center flex-1">CryptoCritters</h1>
       <div className="flex-2 flex justify-end items-center">
+        <BellIcon onClick={() => console.log("Notifications")} className='mr-10'/>
+
         {!isAuthenticated ? <LoginButton /> : user ? (
           <MenuUser name={user.name} />
         ) : (
           <>
             <RegisterButton onClick={() => setShowModalRegister(!showModalRegister)} />
-            <LogoutButton/>
+            <LogoutButton />
           </>)}
       </div>
 

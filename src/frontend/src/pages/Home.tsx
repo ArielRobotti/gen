@@ -1,6 +1,6 @@
 
 import { useSession } from "../context/sessionContext";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 // import {Critter} from "../components/Critter";
 // import { arrayBuffer } from "stream/consumers";
 // import * as THREE from "three";
@@ -40,14 +40,14 @@ const Home = () => {
   const [textMintButton, setTextMintButton] = useState("¡Bring your own Critter to life!");
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  useEffect(() => {
-    // Auto-play audio al montar el componente
-    if (audioRef.current) {
-      audioRef.current.play().catch((err) => {
-        console.warn("Autoplay bloqueado por el navegador. El usuario debe interactuar primero.", err);
-      });
-    }
-  }, []);
+  // useEffect(() => {
+  //   // Auto-play audio al montar el componente
+  //   if (audioRef.current) {
+  //     audioRef.current.play().catch((err) => {
+  //       console.warn("Autoplay bloqueado por el navegador. El usuario debe interactuar primero.", err);
+  //     });
+  //   }
+  // }, []);
 
   const togglePlayLore = () => {
     const audio = audioRef.current;
@@ -82,13 +82,13 @@ const Home = () => {
     console.log("Mint result:", mintResult);
   }
   return (
-    <div className="space-y-10 flex flex-col items-center mt-10 w-full overflow-x-hidden">
+    <div className="space-y-10 flex flex-col items-center mt-10 w-full overflow-x-hidden animate-fade-in">
       <section className="p-12 animate-float custom-scrollbar bg-gradient-to-r from-[#000000cc] to-[#223399dd] text-white p-8 rounded-2xl shadow-2xl max-w-xl mx-auto h-100 overflow-y-auto">
         <div className="flex flex-col items-center mb-2">
-          <h3 className="text-[22px] font-bold mb-3">
-            The Awakening of the Critters
+          <h3  onClick={togglePlayLore} className="text-[22px] font-bold mb-3 cursor-pointer">
+            The Awakening of the Critters <button className=" w-20">🔊 </button>
           </h3>
-          <button onClick={togglePlayLore} className="cursor-pointer w-20">🔊 </button>
+          
         </div>
         <p className="text-[16px] whitespace-pre-line leading-relaxed mb-2">
           {critterLore}
@@ -121,7 +121,6 @@ const Home = () => {
         onClick={handleClickMint}
       >
         <button>
-          <div></div>
           🔥 {textMintButton}
         </button>
         {/* <div className="bg-[#555555] h-4 w-4 rounded-full bor"></div>  //Spinner */}
@@ -134,17 +133,8 @@ const Home = () => {
         </div>
       </>
       )}
-      <audio ref={audioRef} src="/Lore.en.mp3" preload="auto" />
-      <div className="flex-col items-center justify-center w-200 h-200">
-
-        {/* <Critter points={new Array(5000).fill(1).map(() =>
-          new THREE.Vector3().randomDirection().multiplyScalar(
-            Math.random() * 0.5 + 9.5
-          )
-        )}/> */}
-        {/* <Critter data={new Uint8Array([])} /> */}
-
-      </div>
+      <audio ref={audioRef} src="/Lore.en.mp3" />
+ 
     </div>
   );
 };

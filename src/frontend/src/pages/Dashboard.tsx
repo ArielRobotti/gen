@@ -17,7 +17,7 @@ const Dashboard = () => {
   }, [backend]);
 
   return (
-    <div className="text-white">
+    <div className="text-white animate-fade-in">
       <h1 className="text-[22px] text-center">Dashboard</h1>
 
       {user && <div className="text-[14px] ml-2 mt-20 max-w-[700px]">
@@ -56,8 +56,8 @@ const Dashboard = () => {
     </div>
 
     <div className="space-y-2 text-sm md:text-base leading-snug px-2">
-      <p><span className="font-semibold mr-2">📛 Name:</span> {critter.name}</p>
-      <p><span className="font-semibold mr-2">🧪 Generation:</span> {critter.generation}</p>
+      <p><span className="font-semibold mr-2">🪪 Name:</span> {critter.name}</p>
+      <p><span className="font-semibold mr-2">⏳ Generation:</span> {critter.generation}</p>
       <p><span className="font-semibold mr-2">📅 Born:</span> {new Date(Number(critter.dateBorn) / 1000000).toLocaleString()}</p>
       <p className="break-all"><span className="font-semibold mr-2">👤 Owner:</span> {critter.owner.toString()}</p>
       <p><span className="font-semibold mr-2">🧬 Parent A / ID:</span> {critter.parent_a.toString()}</p>

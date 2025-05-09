@@ -29,7 +29,7 @@ const MenuUser = ({ name }: { name: string }) => {
   return (
     <div className="m-[2px] z-70">
       <div
-        className="relative text-black mr-[10px] h-[40px] w-[40px] bg-gradient-to-b from-[#446688] to-[#223355]  rounded-full flex items-center justify-center cursor-pointer "
+        className="relative text-black mr-[10px] h-[35px] w-[35px] bg-gradient-to-b from-[#446688] to-[#223355] border border-[#119911] rounded-full flex items-center justify-center cursor-pointer "
         ref={menuRef}
         onClick={() => setShowMenu(!showMenu)}
       >
