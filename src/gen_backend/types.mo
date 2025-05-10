@@ -23,6 +23,18 @@ module{
     //     geneSize: Nat8;
     // };
 
+    public type NotificationKind = {
+        #Welcome;
+        #MintingCompleted: Nat;
+        #ReproductionCompleted: Nat;
+        #CritterDied: Nat;
+        #SystemMsg: {title: Text; message: Text};
+    };
+
+    public type Notification = {
+        date: Int;
+        kind: NotificationKind;
+    };
 
     public type OwnershipRecord = List.List<{
         owner: Principal;
@@ -72,7 +84,7 @@ module{
 
 
     public type SignInResult = {
-        #Ok: User;
+        #Ok: ({user: User; notifications: [Notification]});
         #Err: Text;
     };
 
