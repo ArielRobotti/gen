@@ -81,7 +81,7 @@ const Header = () => {
           ) : user ? (
             <>
               <div className='flex items-center'>
-                <MessageIcon qty={1}/>
+                <MessageIcon qty={0}/>
                 <BellIcon onClick={() => {}} qty={notifications.length } className='mr-4' />
               </div>
               <MenuUser />
