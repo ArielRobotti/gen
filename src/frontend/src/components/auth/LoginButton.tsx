@@ -2,16 +2,18 @@ import React, { useContext } from "react";
 import { SessionContext } from "../../context/sessionContext";
 import './styles.css'; 
 
-const LoginButton: React.FC = () => {
+type Props = {
+    className?: string
+}
+const LoginButton: React.FC<Props> = ({className = ""}) => {
     const { login } = useContext(SessionContext);
 
     return (
-        <button
-            style={{width: "90px", backgroundColor:"#5555aa"}}
+        <div
             translate="no" 
-            className="button" 
-            onClick={login}>Connect
-        </button>
+            className={`button ${className} w-[100px]`} 
+            onClick={login}>Login
+        </div>
     );
 };
 

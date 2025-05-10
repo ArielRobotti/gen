@@ -1,14 +1,15 @@
 import React from 'react';
 
 type Props = {
+  className?: string;
   onClick: () => void;
 };
 
-const RegisterButton: React.FC<Props> = ({ onClick }) => {
+const RegisterButton: React.FC<Props> = ({ className = "", onClick }) => {
   return (
     <button
       onClick={onClick}
-      className="button"
+      className={`button ${className} w-[150px]`}
     >
       Register
     </button>

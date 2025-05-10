@@ -117,7 +117,7 @@ const Home = () => {
         </div>
       </section>
       <div 
-        className="flex w-[330px] text-lg text-white mt-12 p-4 rounded-xl animate-heartbeat bg-[#022469d0] hover:bg-[#123479] transition duration-300 shadow-lg cursor-pointer"
+        className="flex w-[315px] text-lg text-white mt-12 p-4 rounded-[70px] animate-heartbeat bg-[#022469d0] hover:bg-[#123479] transition duration-300 shadow-lg cursor-pointer"
         onClick={handleClickMint}
       >
         <button>

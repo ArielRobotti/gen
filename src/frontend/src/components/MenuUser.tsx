@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../context/sessionContext";
 
-const MenuUser = ({ name }: { name: string }) => {
+const MenuUser = () => {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { logout } = useSession();
+  const { logout, user } = useSession();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -29,11 +29,11 @@ const MenuUser = ({ name }: { name: string }) => {
   return (
     <div className="m-[2px] z-70">
       <div
-        className="relative text-black mr-[10px] h-[35px] w-[35px] bg-gradient-to-b from-[#446688] to-[#223355] border border-[#119911] rounded-full flex items-center justify-center cursor-pointer "
+        className="relative text-black mr-[10px] h-[35px] w-[35px] bg-gradient-to-b from-[#ffffff] to-[#2222aa] rounded-full flex items-center justify-center cursor-pointer "
         ref={menuRef}
         onClick={() => setShowMenu(!showMenu)}
       >
-        <span className="select-none">{name.split(" ").slice(0, 2).map(n => n[0]).join(" ")}</span>
+        <span className="select-none">{user?.name.split(" ").slice(0, 2).map(n => n[0].toUpperCase()).join(" ")}</span>
       </div>
 
       <div
@@ -42,7 +42,7 @@ const MenuUser = ({ name }: { name: string }) => {
           }`}
       >
         <div onMouseDown={() => navigate("/dashboard")} className="flex items-center justify-between py-1 hover:bg-gray-500">
-          <button className="block w-full text-left px-4 py-2 hover:bg-gray-500">Profile {name.split(" ")[0]}</button>
+          <button className="block w-full text-left px-4 py-2 hover:bg-gray-500">Profile {user?.name.split(" ")[0]}</button>
         </div>
         <hr className=" border-gray-500" />
 
