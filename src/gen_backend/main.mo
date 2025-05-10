@@ -18,10 +18,12 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
   type Critter = Types.Critter;
   type CritterId = Types.CritterId;
   type OwnershipRecord = Types.OwnershipRecord;
+  type Notification = Types.Notification;
 
   let NanoSecPerDay: Int = 24 * 60 * 60 * 1_000_000_000;
 
   stable let users = Map.new<Principal, User>();
+  stable let notificationsMap = Map.new<Principal, [Notification]>();
   stable let deletedUsers = Map.new<Principal, User>();
   stable var admins: [Principal] = [Deployer];
   stable let critters = Map.new<CritterId, Critter>();
@@ -146,6 +148,29 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
     }
   };
 
+  func pushNotification(to: Principal, notification: Notification) {
+    let updateNotifications = switch (Map.remove<Principal, [Notification]>(notificationsMap, phash, to)) {
+      case null {
+        [notification]
+      };
+      case (?current){
+        Array.tabulate<Notification>(
+          current.size(),
+          func x = if (x < current.size()){current[x]} else {notification}
+        )
+      }
+    };
+    //TODO Send email in case 
+    ignore Map.put<Principal,[Notification]>(notificationsMap, phash, to, updateNotifications)
+  };
+
+  func getNotifications(p: Principal): [Notification] {
+    switch (Map.get<Principal, [Notification]>(notificationsMap, phash, p)){
+      case null {[]};
+      case (?notif) {notif}
+    }
+  };
+
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   public shared ({ caller }) func signUp(name: Text): async Types.SignInResult{
@@ -159,15 +184,22 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
       crittersId = [];
     };
     ignore Map.put<Principal, User>(users, phash, caller, newUser);
-    #Ok(newUser)
+    #Ok({
+      user = newUser;
+      notifications= [{date= now(); kind = #Welcome}]}
+    )
   };
 
   public shared query ({ caller }) func signIn(): async Types.SignInResult{
-    let user = Map.get<Principal, User>(users, phash, caller);
+    let user = Map.get<Principal, (User)>(users, phash, caller);
     switch user {
       case null {#Err("Caller is not a User")};
       case ( ?user ) {
-        #Ok(user)
+        #Ok({
+          user; 
+          notifications = getNotifications(caller)
+          }  
+        )
       }
     }
   };
@@ -191,6 +223,13 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
       ownershipRecord: OwnershipRecord = List.make({fromDate = now(); owner})
     };
     ignore Map.put<Nat, Critter>(critters, nhash, newCritter.id, newCritter);
+    pushNotification(
+      owner,
+      { 
+        date = now(); 
+        kind = #MintingCompleted(newCritter.id) 
+      }
+    );
     registerBirth(now(), 0);
     lastCritterId;
   };
