@@ -9,7 +9,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { HomeIcon, BellIcon, MetricsIcon, MessageIcon } from "./Icons";
 
 const Header = () => {
-  const { user, isAuthenticated, identity, backend, updateUser } = useSession();
+  const { user, notifications, isAuthenticated, identity, backend, updateUser, updateNotifications } = useSession();
   const [showModalRegister, setShowModalRegister] = useState(false);
   const [name, setName] = useState("");
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ const Header = () => {
     }, 3000);
 
     return () => clearTimeout(timeout);
-  }, [user, isAuthenticated, navigate]);
+  }, [user, isAuthenticated, navigate, location.pathname]);
 
   const handleChangeName = (e: React.ChangeEvent<HTMLInputElement>) => {
 
@@ -45,7 +45,8 @@ const Header = () => {
 
     if ("Ok" in registerResult) {
       setShowModalRegister(false);
-      updateUser(registerResult.Ok)
+      updateUser(registerResult.Ok.user)
+      updateNotifications(registerResult.Ok.notifications)
       setName("");
     }
     console.log("Register result:", registerResult);
@@ -80,8 +81,8 @@ const Header = () => {
           ) : user ? (
             <>
               <div className='flex items-center'>
-                <MessageIcon />
-                <BellIcon onClick={() => console.log("Notifications")} className='mr-2' />
+                <MessageIcon qty={1}/>
+                <BellIcon onClick={() => {}} qty={notifications.length } className='mr-4' />
               </div>
               <MenuUser />
             </>
@@ -151,7 +152,6 @@ const Header = () => {
         </div>
 
       </header>
-      {/* <RegisterButton onClick={() => setShowModalRegister(!showModalRegister)} /> */}
     </>
   );
 };

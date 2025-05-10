@@ -1,6 +1,6 @@
 import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { HttpAgent, Identity, AnonymousIdentity, ActorSubclass } from '@dfinity/agent';
-import { User, _SERVICE } from '../declarations/backend/backend.did';
+import { User, Notification, _SERVICE } from '../declarations/backend/backend.did';
 import { createActor } from "../declarations/backend";
 import { AuthClient } from '@dfinity/auth-client';
 import ModalProviderSelect from '../components/auth/ModalProviderSelect';
@@ -11,16 +11,19 @@ const host = import.meta.env.VITE_DFX_NETWORK === "local" ? "http://localhost:49
 
 type SessionContextType = {
   user: User | null;
+  notifications: Notification[];
   identity: Identity;
   isAuthenticated: boolean;
   backend: ActorSubclass<_SERVICE>;
   login: () => void;
   logout: () => Promise<void>;
   updateUser: (user: User) => void;
+  updateNotifications: (notifications: Notification[]) => void;
 };
 
 const defaultSessionContext: SessionContextType = {
   user: null,
+  notifications: [],
   identity: new AnonymousIdentity(),
   isAuthenticated: false,
   backend: createActor(canisterId, {
@@ -29,6 +32,7 @@ const defaultSessionContext: SessionContextType = {
   login: () => { },
   logout: async () => { },
   updateUser: () => { },
+  updateNotifications: () =>{ },
 };
 
 export const SessionContext = createContext<SessionContextType>(defaultSessionContext);
@@ -39,6 +43,7 @@ type SessionProviderProps = {
 
 export const SessionProvider = ({ children }: SessionProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([])
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [identity, setIdentity] = useState<Identity>(new AnonymousIdentity());
   const [backend, setBackend] = useState<ActorSubclass<_SERVICE>>(
@@ -68,7 +73,8 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
     const getUser = async () => {
       const dataUser = await backend.signIn();
       if ("Ok" in dataUser) {
-        setUser(dataUser.Ok)
+        setUser(dataUser.Ok.user)
+        setNotifications(dataUser.Ok.notifications)
       } else {
         setUser(null)
               }
@@ -83,12 +89,16 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
 
     if (!identity.getPrincipal().isAnonymous()) {
       setIsAuthenticated(true);
-    }
-  }
+    };
+  };
 
   const updateUser = (user: User) => {
     setUser(user);
-  }
+  };
+
+  const updateNotifications = (updatedNotifications: Notification[]) => {
+    setNotifications(updatedNotifications);
+  };
 
   const handleLoginClick = () => {
     setIsModalOpen(true);
@@ -126,7 +136,7 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
   };
 
   return (
-    <SessionContext.Provider value={{ user, identity, backend, isAuthenticated, updateUser, login: handleLoginClick, logout }}>
+    <SessionContext.Provider value={{ user, notifications, identity, backend, isAuthenticated, updateUser, updateNotifications, login: handleLoginClick, logout }}>
       {children}
       <ModalProviderSelect
         internetIdentityUrl= {host}
