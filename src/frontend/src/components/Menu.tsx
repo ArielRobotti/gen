@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import {BugerMenuIcon } from "./Icons"
+import {BugerMenuIcon, GithubIcon } from "./Icons"
 import { useNavigate } from 'react-router-dom';
 
 const Menu = () => {
@@ -82,7 +82,10 @@ const Menu = () => {
         <div onMouseDown={() => handleMenuOption("/")} className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
           <button className="block w-full text-left px-4 py-1 hover:bg-gray-500">Help</button>
         </div>
-
+        
+        <a href="https://github.com/ArielRobotti/gen" target="blank" className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
+          <div className="block w-full text-left px-4 py-1 hover:bg-gray-500"><GithubIcon className=''/></div>
+        </a>
         
       </div>
     </>

@@ -55,15 +55,11 @@
 }
 
 .modal-content-providers {
-    /* margin-top: 100px; */
-
-    color: rgb(70, 228, 136);
-    font-size: large;
+    color: rgb(246, 250, 248);
+    font-size: 18px;
     display: flex;
     flex-direction: column;
-    background: rgb(39, 51, 66);
-    border-width: 1px;
-    border-color: rgb(184, 174, 212);
+    background: rgb(16, 15, 24);
     padding: 20px;
     width: 400px;
     height: 400px;
