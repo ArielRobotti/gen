@@ -11,8 +11,6 @@ const NotificationItem = ({ notif, onClick }: Props) => {
   const [id, setId] = useState<number | null>(null);
   const { backend } = useSession();
 
-  console.log(notif.read)
-
   useEffect(() => {
     const kind = notif.kind;
     if ("MintingCompleted" in kind) {
