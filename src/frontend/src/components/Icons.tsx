@@ -22,7 +22,6 @@ export const BugerMenuIcon: React.FC<IconProps> = ({ className = "", onClick }) 
 };
 
 export const HomeIcon: React.FC<IconProps> = ({ className = "", onClick }) => {
-  //   const navigate = useNavigate();
   return (
     <svg
       onClick={onClick}
@@ -159,5 +158,20 @@ export const IntIdIcon: React.FC<IconProps> = ({className = "", onClick}) => (
       </linearGradient>
     </defs>
   </svg>
+);
 
-)
+export const BrokenEggIcon: React.FC<IconProps> = ({ className = "", onClick }) => {
+  return (
+    <svg
+      onClick={onClick}
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 512 512"
+      className={`w-8 h-8 text-gray-700 cursor-pointer ${className}`}
+      fill="#dedede"
+      aria-hidden="true"
+    >
+      <path d="M336 272c-13.3 0-24 10.7-24 24 0 6.2 2.4 11.9 6.2 16.2l-45.7 47.2-30.6-32 45.7-47.2c3.1 1.1 6.4 1.8 9.9 1.8 15.2 0 28-10.2 32-24H336zM256 0C167.6 0 96 114.6 96 240c0 52.2 19.7 99.6 52.2 136.1 16.1 17.9 34.8 32 55.2 41.9l42.7 83.8c2.7 5.3 8.1 8.3 13.6 8.3s10.9-3 13.6-8.3l42.7-83.8c20.4-9.9 39.1-24 55.2-41.9C396.3 339.6 416 292.2 416 240 416 114.6 344.4 0 256 0z" />
+    </svg>
+  );
+};
+

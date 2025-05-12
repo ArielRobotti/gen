@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSession } from '../context/sessionContext';
+import NotificationsPanel from "./NotificationsPanel";
 import Menu from './Menu';
 import MenuUser from './MenuUser';
 import LoginButton from './auth/LoginButton';
@@ -9,8 +10,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { HomeIcon, BellIcon, MetricsIcon, MessageIcon } from "./Icons";
 
 const Header = () => {
-  const { user, notifications, isAuthenticated, identity, backend, updateUser, updateNotifications } = useSession();
+  const { user, notifications, messagesPrev, isAuthenticated, identity, backend, updateUser, updateNotifications, updateUnreadMessages } = useSession();
   const [showModalRegister, setShowModalRegister] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [name, setName] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,6 +40,11 @@ const Header = () => {
     setName(e.target.value);
   };
 
+  const handleClickBell = () => {
+    setShowNotifications(!showNotifications)
+  };
+
+
   const handleRegister = async () => {
     if (name.length < 3 || name.length > 30) { return }
     console.log("host")
@@ -47,6 +54,7 @@ const Header = () => {
       setShowModalRegister(false);
       updateUser(registerResult.Ok.user)
       updateNotifications(registerResult.Ok.notifications)
+      updateUnreadMessages(registerResult.Ok.messagesPrev)
       setName("");
     }
     console.log("Register result:", registerResult);
@@ -75,15 +83,19 @@ const Header = () => {
         </div>
 
         <div className="flex items-center justify-end w-[200px]">
-          
+
           {!isAuthenticated ? (
             <LoginButton />
           ) : user ? (
             <>
               <div className='flex items-center'>
-                <MessageIcon qty={0}/>
-                <BellIcon onClick={() => {}} qty={notifications.length } className='mr-4' />
+                <MessageIcon qty={messagesPrev.length} />
+                <BellIcon onClick={handleClickBell} qty={notifications.filter(n => !n.read).length} className='mr-4' />
               </div>
+              {showNotifications && (
+                <NotificationsPanel onClose={() => setShowNotifications(false)}/>
+              )}
+
               <MenuUser />
             </>
           ) : (

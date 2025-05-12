@@ -28,12 +28,13 @@ module{
         #MintingCompleted: Nat;
         #ReproductionCompleted: Nat;
         #CritterDied: Nat;
-        #SystemMsg: {title: Text; message: Text};
+        // #SystemMsg: {title: Text; message: Text};
     };
 
     public type Notification = {
         date: Int;
         kind: NotificationKind;
+        read: Bool;
     };
 
     public type OwnershipRecord = List.List<{
@@ -84,7 +85,13 @@ module{
 
 
     public type SignInResult = {
-        #Ok: ({user: User; notifications: [Notification]});
+        #Ok: (
+            {
+                user: User; 
+                notifications: [Notification];
+                messagesPrev: [{sender: Text; title: Text; date: Int}]
+            }
+        );
         #Err: Text;
     };
 

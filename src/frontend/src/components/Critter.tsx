@@ -1,32 +1,14 @@
-// src/components/GalaxyScene.tsx
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three-stdlib";
-
-// type GalaxySceneProps = {
-//   points: THREE.Vector3[];
-// };
 
 type GalaxySceneProps = {
   data: Uint8Array;
 };
 
-
-
 export const Critter: React.FC<GalaxySceneProps> = ({ data }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // const byteToFloat = (byte: number, scale = 1) => (byte / 255) * scale;
-  // const convertToPoints = (data: Uint8Array): THREE.Vector3[] => {
-  //   const vectors: THREE.Vector3[] = [];
-  //   for (let i = 0; i + 2 < data.length; i += 3) {
-  //     const x = byteToFloat(data[i], 20) - 10;  // rango [-10, 10]
-  //     const y = byteToFloat(data[i + 1], 20) - 10;
-  //     const z = byteToFloat(data[i + 2], 20) - 10;
-  //     vectors.push(new THREE.Vector3(x, y, z).normalize().multiplyScalar(Math.random() * 0.5 + 9.5));
-  //   }
-  //   return vectors;
-  // };
   const pseudoRandom = (seed: number) =>
     Math.sin(seed * 1337.1) * 43758.5453 % 1;
 
@@ -39,7 +21,6 @@ export const Critter: React.FC<GalaxySceneProps> = ({ data }) => {
 
       const index = i / 3;
 
-      // Agregar ruido determinístico por índice
       const dx = pseudoRandom(index) * 0.2 - 0.1;
       const dy = pseudoRandom(index + 1) * 0.2 - 0.1;
       const dz = pseudoRandom(index + 2) * 0.2 - 0.1;
@@ -52,7 +33,6 @@ export const Critter: React.FC<GalaxySceneProps> = ({ data }) => {
     }
     return vectors;
   };
-
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -167,8 +147,9 @@ export const Critter: React.FC<GalaxySceneProps> = ({ data }) => {
     window.addEventListener("resize", onResize);
 
     return () => {
-      window.removeEventListener("resize", onResize);
-      containerRef.current?.removeChild(renderer.domElement);
+      if (renderer.domElement.parentNode) {
+        renderer.domElement.parentNode.removeChild(renderer.domElement);
+      }
     };
   }, [data]);
 

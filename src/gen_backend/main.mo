@@ -155,12 +155,12 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
       };
       case (?current){
         Array.tabulate<Notification>(
-          current.size(),
+          current.size() + 1,
           func x = if (x < current.size()){current[x]} else {notification}
         )
       }
     };
-    //TODO Send email in case 
+    // TODO Send email in case 
     ignore Map.put<Principal,[Notification]>(notificationsMap, phash, to, updateNotifications)
   };
 
@@ -169,6 +169,11 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
       case null {[]};
       case (?notif) {notif}
     }
+  };
+
+  func getUnReadMessages(p: Principal): [{title: Text; sender: Text; date: Int}] {
+    // TODO
+    []
   };
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -184,9 +189,12 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
       crittersId = [];
     };
     ignore Map.put<Principal, User>(users, phash, caller, newUser);
-    #Ok({
-      user = newUser;
-      notifications= [{date= now(); kind = #Welcome}]}
+    #Ok(
+      {
+        user = newUser;
+        notifications= [];
+        messagesPrev = [{date = now(); sender = "System"; title = "Wellcome to Crypto Critters";}];
+      }
     )
   };
 
@@ -195,11 +203,30 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
     switch user {
       case null {#Err("Caller is not a User")};
       case ( ?user ) {
-        #Ok({
-          user; 
-          notifications = getNotifications(caller)
+        #Ok(
+          {
+            user; 
+            notifications = getNotifications(caller);
+            messagesPrev = getUnReadMessages(caller);
           }  
         )
+      }
+    }
+  };
+
+  public shared ({ caller }) func readNotification(date: Int): async (){
+    switch (Map.remove<Principal, [Notification]>(notificationsMap, phash, caller)) {
+      case null {};
+      case ( ?notifications) {
+        let updatedNotifications = Array.tabulate<Notification>(
+          notifications.size(),
+          func x = if (notifications[x].date == date) {
+            {notifications[x] with read = true}
+            } else {
+              notifications[x]
+            }
+        );
+        ignore Map.put<Principal, [Notification]>(notificationsMap, phash, caller, updatedNotifications)
       }
     }
   };
@@ -227,7 +254,8 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
       owner,
       { 
         date = now(); 
-        kind = #MintingCompleted(newCritter.id) 
+        kind = #MintingCompleted(newCritter.id);
+        read = false;
       }
     );
     registerBirth(now(), 0);
