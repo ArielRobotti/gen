@@ -98,7 +98,6 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
           setUser(dataUser.Ok.user);
           setNotifications(dataUser.Ok.notifications);
           setMessagesPrev(dataUser.Ok.messagesPrev);
-          console.log("Success", dataUser);
         } else {
           setUser(null);
           console.warn("Received non-Ok response");

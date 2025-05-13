@@ -28,7 +28,8 @@ module{
         #MintingCompleted: Nat;
         #ReproductionCompleted: Nat;
         #CritterDied: Nat;
-        // #SystemMsg: {title: Text; message: Text};
+        #NewRefferal: Text;
+        #ReferralMinted;
     };
 
     public type Notification = {
@@ -83,13 +84,36 @@ module{
         };
     };
 
+    type Value = {
+        #text: Text;
+        #nat: Nat;
+        #blob: Blob;
+        #bool: Bool;
+        #int: Int;
+    };
+
+    public type EconomyData = {
+        balanceCRT: Nat;
+        referreds: [Principal];
+        referredBy: ?Principal;
+        othter: [{key: Text; value: Value}]
+
+    };
+    
+    public let DefaulEconomyData: EconomyData = {
+        balanceCRT = 0;
+        referreds = [];
+        referredBy = null;
+        othter = []
+    };
 
     public type SignInResult = {
         #Ok: (
             {
                 user: User; 
                 notifications: [Notification];
-                messagesPrev: [{sender: Text; title: Text; date: Int}]
+                messagesPrev: [{sender: Text; title: Text; date: Int}];
+                activityStatus: ?EconomyData;
             }
         );
         #Err: Text;

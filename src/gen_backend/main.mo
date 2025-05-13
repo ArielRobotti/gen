@@ -1,6 +1,6 @@
 import Types "./types";
 import Map "mo:map/Map";
-import { nhash; phash } "mo:map/Map";
+import { nhash; phash; n32hash } "mo:map/Map";
 import Set "mo:map/Set";
 import Array "mo:base/Array";
 import List "mo:base/List";
@@ -10,8 +10,9 @@ import Rand "mo:random/Rand";
 import { now } "mo:base/Time";
 import { print } "mo:base/Debug";
 import Iter "mo:base/Iter";
+import Principal "mo:base/Principal";
 
-shared ({caller = Deployer }) actor class CriptoCritters() = self {
+shared ({ caller = Deployer }) actor class CriptoCritters() = self {
 
   type User = Types.User;
   type Genome = Types.Genome;
@@ -20,15 +21,19 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
   type OwnershipRecord = Types.OwnershipRecord;
   type Notification = Types.Notification;
 
-  let NanoSecPerDay: Int = 24 * 60 * 60 * 1_000_000_000;
+  let NanoSecPerDay : Int = 24 * 60 * 60 * 1_000_000_000;
 
   stable let users = Map.new<Principal, User>();
   stable let notificationsMap = Map.new<Principal, [Notification]>();
+  stable let userInternalEconomyData = Map.new<Principal, Types.EconomyData>();
+  stable let referralCodes = Map.new<Nat32, Principal>();
   stable let deletedUsers = Map.new<Principal, User>();
-  stable var admins: [Principal] = [Deployer];
+
+  stable var admins : [Principal] = [Deployer];
+
   stable let critters = Map.new<CritterId, Critter>();
   // stable var crittersByGeneration: [{generation: Nat; births: Nat; deaths: Nat}] = [];
-  stable let crittersByGeneration = Map.new<Nat, {births: Nat; deaths: Nat}>();
+  stable let crittersByGeneration = Map.new<Nat, { births : Nat; deaths : Nat }>();
   stable var recordBirths = List.nil<(Int, Nat)>();
   stable var recordDeaths = List.nil<(Int, Nat)>();
   stable var lastCritterId = 0;
@@ -37,28 +42,28 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
 
   /////////////////////////////////////// Admin functions ////////////////////////////////////////////////////
 
-  public shared ({ caller }) func addAdmin(a: Principal): async (){
+  public shared ({ caller }) func addAdmin(a : Principal) : async () {
     var isAdmin = false;
-    for(admin in admins.vals()){
-      if (admin == a ) { return };
+    for (admin in admins.vals()) {
+      if (admin == a) { return };
       if (admin == caller) { isAdmin := true };
     };
-    if ( not isAdmin ) { return };
-    admins := Array.tabulate<Principal>(admins.size() + 1, func x = if(x < admins.size()){admins[x]} else {a})
+    if (not isAdmin) { return };
+    admins := Array.tabulate<Principal>(admins.size() + 1, func x = if (x < admins.size()) { admins[x] } else { a });
   };
 
-  public shared query func info(): async Types.PublicInfo {
+  public shared query func info() : async Types.PublicInfo {
     {
       usersQty = Map.size(users);
       adminsQty = admins.size();
-      crittersByGeneration = Map.toArray<Nat, {births: Nat; deaths: Nat}>(crittersByGeneration);
+      crittersByGeneration = Map.toArray<Nat, { births : Nat; deaths : Nat }>(crittersByGeneration);
       birthsLastWeek = getBirthsByPeriod(now() - NanoSecPerDay * 7, now());
       deathsLastWeek = getDeathsByPeriod(now() - NanoSecPerDay * 7, now());
-    } 
+    };
   };
 
-  public shared ({ caller }) func resetAll(): async {#Ok; #Err} {
-    if(not isAdmin(caller)) {return #Err};
+  public shared ({ caller }) func resetAll() : async { #Ok; #Err } {
+    if (not isAdmin(caller)) { return #Err };
     Map.clear(users);
     Map.clear(critters);
     Map.clear(crittersByGeneration);
@@ -66,122 +71,170 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
     recordBirths := List.nil<(Int, Nat)>();
     recordDeaths := List.nil<(Int, Nat)>();
     lastCritterId := 0;
-    #Ok
+    #Ok;
   };
 
-  public shared query ({ caller }) func getUsers(): async [User]{
-    if(not isAdmin(caller)) {return []};
-    return Iter.toArray(Map.vals<Principal, User>(users))
+  public shared query ({ caller }) func getUsers() : async [User] {
+    if (not isAdmin(caller)) { return [] };
+    return Iter.toArray(Map.vals<Principal, User>(users));
   };
 
-  public shared ({ caller }) func deleteUser(p: Principal): async {#Ok; #Err}{
-    if(not isAdmin(caller)) {return #Err};
-    switch (Map.remove<Principal, User>(users, phash, p)){
-      case null {return #Err};
-      case ( ?user ){
+  public shared ({ caller }) func deleteUser(p : Principal) : async {
+    #Ok;
+    #Err;
+  } {
+    if (not isAdmin(caller)) { return #Err };
+    switch (Map.remove<Principal, User>(users, phash, p)) {
+      case null { return #Err };
+      case (?user) {
         ignore Map.put<Principal, User>(deletedUsers, phash, p, user);
-      }
+      };
     };
-    #Ok
+    #Ok;
   };
 
-  public shared ({ caller }) func restoreUser(p: Principal): async {#Ok; #Err}{
-    if(not isAdmin(caller)) {return #Err};
-    switch (Map.remove<Principal, User>(deletedUsers, phash, p)){
-      case null {return #Err};
-      case ( ?user ){
+  public shared ({ caller }) func restoreUser(p : Principal) : async {
+    #Ok;
+    #Err;
+  } {
+    if (not isAdmin(caller)) { return #Err };
+    switch (Map.remove<Principal, User>(deletedUsers, phash, p)) {
+      case null { return #Err };
+      case (?user) {
         ignore Map.put<Principal, User>(users, phash, p, user);
-      }
+      };
     };
-    #Ok
+    #Ok;
   };
 
-  public shared ({ caller }) func garbageCollector(): async {#Ok; #Err}{
-    if(not isAdmin(caller)) {return #Err};
+  public shared ({ caller }) func garbageCollector() : async { #Ok; #Err } {
+    if (not isAdmin(caller)) { return #Err };
     Map.clear(deletedUsers);
-    #Ok
+    #Ok;
   };
 
-  public shared ({ caller }) func getDeletedUsers(): async [User]{
-    if(not isAdmin(caller)) {return []};
-    return Iter.toArray(Map.vals<Principal, User>(deletedUsers))
+  public shared ({ caller }) func getDeletedUsers() : async [User] {
+    if (not isAdmin(caller)) { return [] };
+    return Iter.toArray(Map.vals<Principal, User>(deletedUsers));
   };
 
   //////////////////////////////////// Private functions ////////////////////////////////////////////////////
 
-  func isAdmin(user: Principal): Bool {
-    for (admin in admins.vals()){
+  func isAdmin(user : Principal) : Bool {
+    for (admin in admins.vals()) {
       if (admin == user) { return true };
     };
-    return false
+    return false;
   };
 
-  func getBirthsByPeriod(start: Int, end: Int): Nat {
+  func getBirthsByPeriod(start : Int, end : Int) : Nat {
     // TODO
-    0
+    0;
   };
 
-  func getDeathsByPeriod(start: Int, end: Int): Nat {
+  func getDeathsByPeriod(start : Int, end : Int) : Nat {
     //TODO
-    0
+    0;
   };
 
-  func registerBirth(timestamp: Int, generation: Nat) {
-    let prevStatus = Map.get<Nat, {births: Nat; deaths: Nat}>(crittersByGeneration, nhash, generation);
+  func registerBirth(timestamp : Int, generation : Nat) {
+    let prevStatus = Map.get<Nat, { births : Nat; deaths : Nat }>(crittersByGeneration, nhash, generation);
     switch prevStatus {
       case null {
-        ignore Map.put<Nat, {births: Nat; deaths: Nat}>(
-          crittersByGeneration, 
-          nhash, 
-          generation, 
-          {births = 1; deaths = 0}
-        )
+        ignore Map.put<Nat, { births : Nat; deaths : Nat }>(
+          crittersByGeneration,
+          nhash,
+          generation,
+          { births = 1; deaths = 0 },
+        );
       };
       case (?status) {
-        ignore Map.put<Nat, {births: Nat; deaths: Nat}>(
-          crittersByGeneration, 
-          nhash, 
-          generation, 
-          {status with births = status.births + 1}
-        )
-      } 
-    }
+        ignore Map.put<Nat, { births : Nat; deaths : Nat }>(
+          crittersByGeneration,
+          nhash,
+          generation,
+          { status with births = status.births + 1 },
+        );
+      };
+    };
   };
 
-  func pushNotification(to: Principal, notification: Notification) {
+  func pushNotification(to : Principal, notification : Notification) {
     let updateNotifications = switch (Map.remove<Principal, [Notification]>(notificationsMap, phash, to)) {
-      case null {
-        [notification]
-      };
-      case (?current){
+      case null { [notification] };
+      case (?current) {
         Array.tabulate<Notification>(
           current.size() + 1,
-          func x = if (x < current.size()){current[x]} else {notification}
-        )
-      }
+          func x = if (x < current.size()) { current[x] } else { notification },
+        );
+      };
     };
-    // TODO Send email in case 
-    ignore Map.put<Principal,[Notification]>(notificationsMap, phash, to, updateNotifications)
+    // TODO Send email in case
+    ignore Map.put<Principal, [Notification]>(notificationsMap, phash, to, updateNotifications);
   };
 
-  func getNotifications(p: Principal): [Notification] {
-    switch (Map.get<Principal, [Notification]>(notificationsMap, phash, p)){
-      case null {[]};
-      case (?notif) {notif}
-    }
+  func getNotifications(p : Principal) : [Notification] {
+    switch (Map.get<Principal, [Notification]>(notificationsMap, phash, p)) {
+      case null { [] };
+      case (?notif) { notif };
+    };
   };
 
-  func getUnReadMessages(p: Principal): [{title: Text; sender: Text; date: Int}] {
+  func getUnReadMessages(p : Principal) : [{
+    title : Text;
+    sender : Text;
+    date : Int;
+  }] {
     // TODO
-    []
+    [];
+  };
+
+  func getReferralCode(p : Principal) : Nat32 {
+    Principal.hash(p);
+  };
+
+  func applyReferralProgram(code : Nat32, referred : Principal) : ?Principal {
+    let referralUser = Map.get<Nat32, Principal>(referralCodes, n32hash, code);
+    switch referralUser {
+      case null {};
+      case (?referral) {
+        print("Referente: " # debug_show(referral));
+        switch (Map.get<Principal, Types.EconomyData>(userInternalEconomyData, phash, referral)) {
+          case null {
+            let data : Types.EconomyData = {
+              Types.DefaulEconomyData with
+              referreds = [referred];
+            };
+            ignore Map.put<Principal, Types.EconomyData>(userInternalEconomyData, phash, referral, data);
+            print("Data guardada: " # debug_show(Map.get<Principal, Types.EconomyData>(userInternalEconomyData, phash, referral)));
+          };
+          case (?data) {
+            let dataUpdated : Types.EconomyData = {
+              data with
+              referreds = Array.tabulate<Principal>(
+                data.referreds.size() + 1,
+                func x = if (x < data.referreds.size()) { data.referreds[x] } else {
+                  referred;
+                },
+              );
+            };
+            ignore Map.put<Principal, Types.EconomyData>(userInternalEconomyData, phash, referral, dataUpdated);
+            print("Data guardada: " # debug_show(Map.get<Principal, Types.EconomyData>(userInternalEconomyData, phash, referral)));
+          };
+        }
+      };
+    };
+    return referralUser;
   };
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  public shared ({ caller }) func signUp(name: Text): async Types.SignInResult{
-    print("registrandop usuario");
-    if(Map.get<Principal, User>(users, phash, caller) != null) {return #Err("Caller is already User")};
-    let newUser: User = { 
+  public shared ({ caller }) func signUp({ name : Text; code : ?Nat32 }) : async Types.SignInResult {
+
+    if (Map.get<Principal, User>(users, phash, caller) != null) {
+      return #Err("Caller is already User");
+    };
+    let newUser : User = {
       Types.userDefault() with
       principal = caller;
       name;
@@ -189,55 +242,82 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
       crittersId = [];
     };
     ignore Map.put<Principal, User>(users, phash, caller, newUser);
-    #Ok(
-      {
-        user = newUser;
-        notifications= [];
-        messagesPrev = [{date = now(); sender = "System"; title = "Wellcome to Crypto Critters";}];
+
+    switch code {
+      case null {};
+      case (?code) {
+        switch (applyReferralProgram(code, caller)) {
+          case null {};
+          case (?referralUser) {
+            ignore Map.put<Principal, Types.EconomyData>(
+              userInternalEconomyData,
+              phash,
+              caller,
+              { Types.DefaulEconomyData with referredBy = ?referralUser },
+            );
+          };
+        };
       }
-    )
+    };
+
+    #Ok({
+      user = newUser;
+      notifications = [];
+      messagesPrev = [{
+        date = now();
+        sender = "System";
+        title = "Wellcome to Crypto Critters";
+      }];
+      activityStatus = Map.get<Principal, Types.EconomyData>(userInternalEconomyData, phash, caller);
+    });
   };
 
-  public shared query ({ caller }) func signIn(): async Types.SignInResult{
+  public shared query ({ caller }) func signIn() : async Types.SignInResult {
     let user = Map.get<Principal, (User)>(users, phash, caller);
     switch user {
-      case null {#Err("Caller is not a User")};
-      case ( ?user ) {
-        #Ok(
-          {
-            user; 
-            notifications = getNotifications(caller);
-            messagesPrev = getUnReadMessages(caller);
-          }  
-        )
-      }
-    }
+      case null { #Err("Caller is not a User") };
+      case (?user) {
+        let activityStatus = Map.get<Principal, Types.EconomyData>(userInternalEconomyData, phash, caller);
+        #Ok({
+          user;
+          notifications = getNotifications(caller);
+          messagesPrev = getUnReadMessages(caller);
+          activityStatus;
+        });
+      };
+    };
   };
 
-  public shared ({ caller }) func readNotification(date: Int): async (){
+  public shared ({ caller }) func generateReferralCode() : async Nat32 {
+    let code = getReferralCode(caller);
+    ignore Map.put<Nat32, Principal>(referralCodes, n32hash, code, caller);
+    code;
+  };
+
+  public shared ({ caller }) func readNotification(date : Int) : async () {
     switch (Map.remove<Principal, [Notification]>(notificationsMap, phash, caller)) {
       case null {};
-      case ( ?notifications) {
+      case (?notifications) {
         let updatedNotifications = Array.tabulate<Notification>(
           notifications.size(),
           func x = if (notifications[x].date == date) {
-            {notifications[x] with read = true}
-            } else {
-              notifications[x]
-            }
+            { notifications[x] with read = true };
+          } else {
+            notifications[x];
+          },
         );
-        ignore Map.put<Principal, [Notification]>(notificationsMap, phash, caller, updatedNotifications)
-      }
-    }
+        ignore Map.put<Principal, [Notification]>(notificationsMap, phash, caller, updatedNotifications);
+      };
+    };
   };
 
-  func safeMintBasicCritter({owner: Principal; genomeLength: Nat}): async CritterId{
+  func safeMintBasicCritter({ owner : Principal; genomeLength : Nat }) : async CritterId {
     print("Minteando");
     let rand = Rand.Rand();
     let genomeNat = await rand.randArray(genomeLength);
     let genome = Array.tabulate<Nat8>(genomeLength, func i = Nat8.fromNat(genomeNat[i]));
     lastCritterId += 1;
-    let newCritter: Critter = {
+    let newCritter : Critter = {
       id = lastCritterId;
       name = "";
       dateBorn = now();
@@ -247,64 +327,74 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
       parent_b = 0;
       childs = [];
       owner;
-      ownershipRecord: OwnershipRecord = List.make({fromDate = now(); owner})
+      ownershipRecord : OwnershipRecord = List.make({ fromDate = now(); owner });
     };
     ignore Map.put<Nat, Critter>(critters, nhash, newCritter.id, newCritter);
     pushNotification(
       owner,
-      { 
-        date = now(); 
+      {
+        date = now();
         kind = #MintingCompleted(newCritter.id);
         read = false;
-      }
+      },
     );
     registerBirth(now(), 0);
     lastCritterId;
   };
 
-  func verifyTransaction(id: Nat): Bool {
+  func verifyTransaction(id : Nat) : Bool {
     true;
     //TODO
   };
 
-  func userIsMinting(user: Principal): Bool {
-    Set.has<Principal>(usersMinting, phash, user)
+  func userIsMinting(user : Principal) : Bool {
+    Set.has<Principal>(usersMinting, phash, user);
   };
 
-  public shared ({ caller }) func mintCritter({transactionId: Nat; genomeLength: Nat}): async {#Err: Text; #Ok: CritterId} {
+  public shared ({ caller }) func mintCritter({
+    transactionId : Nat;
+    genomeLength : Nat;
+  }) : async { #Err : Text; #Ok : CritterId } {
     let user = Map.get<Principal, User>(users, phash, caller);
     switch user {
-      case null {return #Err("Caller is not a user")};
-      case ( ?user ){
-        if(not verifyTransaction(transactionId)){
+      case null { return #Err("Caller is not a user") };
+      case (?user) {
+        if (not verifyTransaction(transactionId)) {
           return #Err("Transaction not verified");
         };
-        if(userIsMinting(caller)) {
+        if (userIsMinting(caller)) {
           return #Err("The Caller is minting a Critter right now");
         };
 
         Set.add<Principal>(usersMinting, phash, caller);
-        let newCritterId = await safeMintBasicCritter({owner = caller; genomeLength});
+        let newCritterId = await safeMintBasicCritter({
+          owner = caller;
+          genomeLength;
+        });
         let crittersId = Array.tabulate<Nat>(
           user.crittersId.size() + 1,
-          func x = if( x < user.crittersId.size()) {user.crittersId[x]} else {newCritterId}
+          func x = if (x < user.crittersId.size()) { user.crittersId[x] } else {
+            newCritterId;
+          },
         );
-        ignore Map.put<Principal, User>(users, phash, caller, {user with crittersId});
+        ignore Map.put<Principal, User>(users, phash, caller, { user with crittersId });
         ignore Set.remove<Principal>(usersMinting, phash, caller);
         print("Minteo finalizado con éxito");
-        #Ok(newCritterId)
-      }
+        #Ok(newCritterId);
+      };
     };
-    
+
   };
 
-  func crossing_over(a: Nat8, b: Nat8, mut: Nat): Nat8 {
-    let prom: Nat = (Nat8.toNat(a) + Nat8.toNat(b)) / 2;
-    let withMutation = if (prom + mut <= 255) {prom + mut} else {prom - mut: Nat};
-    Nat8.fromNat(withMutation)
+  func crossing_over(a : Nat8, b : Nat8, mut : Nat) : Nat8 {
+    let prom : Nat = (Nat8.toNat(a) + Nat8.toNat(b)) / 2;
+    let withMutation = if (prom + mut <= 255) { prom + mut } else {
+      prom - mut : Nat;
+    };
+    Nat8.fromNat(withMutation);
   };
 
-  func safeProcreate(a: Critter, b: Critter): async (CritterId, CritterId) {
+  func safeProcreate(a : Critter, b : Critter) : async (CritterId, CritterId) {
     let mutationGenerator = Rand.Rand();
     mutationGenerator.setRange(0, 16);
     let mutationsArray = await mutationGenerator.randArray(a.genome.size() * 2);
@@ -312,8 +402,8 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
     let genome2 = Array.tabulate<Nat8>(a.genome.size(), func i = crossing_over(a.genome[i], b.genome[i], mutationsArray[i + a.genome.size()]));
 
     lastCritterId += 1;
-    let generation = Nat.max(a.generation, b.generation ) + 1;
-    let newCritter1: Critter = {
+    let generation = Nat.max(a.generation, b.generation) + 1;
+    let newCritter1 : Critter = {
       id = lastCritterId;
       name = "";
       parent_a = a.id;
@@ -322,13 +412,16 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
       dateBorn = now();
       generation;
       owner = a.owner;
-      ownershipRecord: OwnershipRecord = List.make({fromDate = now(); owner = a.owner});
+      ownershipRecord : OwnershipRecord = List.make({
+        fromDate = now();
+        owner = a.owner;
+      });
       genome = genome1;
     };
     ignore Map.put<Nat, Critter>(critters, nhash, newCritter1.id, newCritter1);
 
     lastCritterId += 1;
-    let newCritter2: Critter = {
+    let newCritter2 : Critter = {
       id = lastCritterId;
       name = "";
       parent_a = a.id;
@@ -337,23 +430,30 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
       dateBorn = now();
       generation;
       owner = b.owner;
-      ownershipRecord: OwnershipRecord = List.make({fromDate = now(); owner = b.owner});
+      ownershipRecord : OwnershipRecord = List.make({
+        fromDate = now();
+        owner = b.owner;
+      });
       genome = genome2;
     };
     ignore Map.put<Nat, Critter>(critters, nhash, newCritter2.id, newCritter2);
 
     let updateChidsA = Array.tabulate<Nat>(
       a.childs.size() + 2,
-      func x = if(x < a.childs.size()) { a.childs[x]} else {[newCritter1.id, newCritter2.id][x - a.childs.size()]}
+      func x = if (x < a.childs.size()) { a.childs[x] } else {
+        [newCritter1.id, newCritter2.id][x - a.childs.size()];
+      },
     );
 
     let updateChidsB = Array.tabulate<Nat>(
       b.childs.size() + 2,
-      func x = if(x < b.childs.size()) { b.childs[x]} else {[newCritter1.id, newCritter2.id][x - b.childs.size()]}
+      func x = if (x < b.childs.size()) { b.childs[x] } else {
+        [newCritter1.id, newCritter2.id][x - b.childs.size()];
+      },
     );
 
-    ignore Map.put<Nat, Critter>(critters, nhash, a.id, {a with childs = updateChidsA});
-    ignore Map.put<Nat, Critter>(critters, nhash, b.id, {b with childs = updateChidsB});
+    ignore Map.put<Nat, Critter>(critters, nhash, a.id, { a with childs = updateChidsA });
+    ignore Map.put<Nat, Critter>(critters, nhash, b.id, { b with childs = updateChidsB });
     registerBirth(now(), generation);
 
     (newCritter1.id, newCritter2.id);
@@ -364,35 +464,49 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
 
   // }
 
-  public shared ({ caller }) func procreate(id_a: CritterId, id_b: CritterId): async {#Ok: (CritterId, CritterId); #Err: Text} {
-    switch (Map.get<CritterId, Critter>(critters, nhash, id_a)) { 
-      case null {#Err("There is no creature associated with id " # Nat.toText(id_a))};
-      case ( ?spcm_a ) {
-        if(spcm_a.owner != caller) {return #Err("Caller is not owner of Critter A")};
+  public shared ({ caller }) func procreate(id_a : CritterId, id_b : CritterId) : async {
+    #Ok : (CritterId, CritterId);
+    #Err : Text;
+  } {
+    switch (Map.get<CritterId, Critter>(critters, nhash, id_a)) {
+      case null {
+        #Err("There is no creature associated with id " # Nat.toText(id_a));
+      };
+      case (?spcm_a) {
+        if (spcm_a.owner != caller) {
+          return #Err("Caller is not owner of Critter A");
+        };
         switch (Map.get<CritterId, Critter>(critters, nhash, id_b)) {
-          case null { #Err("There is no creature associated with id " # Nat.toText(id_b))};
-          case ( ?spcm_b ) {
-            if(spcm_a.genome.size() != spcm_b.genome.size()) {return #Err("The species do not have a compatible genome")};
+          case null {
+            #Err("There is no creature associated with id " # Nat.toText(id_b));
+          };
+          case (?spcm_b) {
+            if (spcm_a.genome.size() != spcm_b.genome.size()) {
+              return #Err("The species do not have a compatible genome");
+            };
             // if(consanguinity(spcm_a, spcm_b) < 4){return #Err("rejection by degree of consanguinity")};
-            #Ok(await safeProcreate(spcm_a, spcm_b))
-          }
-        }
-      }
-    }
-  };
-  
-  public shared query func getCritter(id: CritterId): async {#Ok: Critter; #Err} {
-    return switch (Map.get<CritterId, Critter>(critters, nhash, id)){
-      case null { #Err };
-      case ( ?spcm ) {#Ok(spcm)}
-    }
+            #Ok(await safeProcreate(spcm_a, spcm_b));
+          };
+        };
+      };
+    };
   };
 
-  func getCrittersByPrincipal(owner: Principal): [Critter] {
+  public shared query func getCritter(id : CritterId) : async {
+    #Ok : Critter;
+    #Err;
+  } {
+    return switch (Map.get<CritterId, Critter>(critters, nhash, id)) {
+      case null { #Err };
+      case (?spcm) { #Ok(spcm) };
+    };
+  };
+
+  func getCrittersByPrincipal(owner : Principal) : [Critter] {
     switch (Map.get<Principal, User>(users, phash, owner)) {
-      case null {[]};
-      case ( ?user ){
-        let defaultCritter: Critter = {
+      case null { [] };
+      case (?user) {
+        let defaultCritter : Critter = {
           id = 0;
           name = "";
           parent_a = 0;
@@ -406,25 +520,25 @@ shared ({caller = Deployer }) actor class CriptoCritters() = self {
         };
         let _critters = Array.tabulate<Critter>(
           user.crittersId.size(),
-          func x = switch (Map.get<CritterId, Critter>(critters, nhash, user.crittersId[x])){
-            case null {defaultCritter};
-            case ( ?creature ) {
-              if(owner == creature.owner){
-                creature
+          func x = switch (Map.get<CritterId, Critter>(critters, nhash, user.crittersId[x])) {
+            case null { defaultCritter };
+            case (?creature) {
+              if (owner == creature.owner) {
+                creature;
               } else {
-                defaultCritter
-              }
-            }
-          }
+                defaultCritter;
+              };
+            };
+          },
         );
-        Array.filter<Critter>( _critters, func x = x.id != 0 )
-      }
+        Array.filter<Critter>(_critters, func x = x.id != 0);
+      };
     };
 
   };
 
-  public shared query ({ caller }) func getMyCritters(): async [Critter]{
-    getCrittersByPrincipal(caller)
+  public shared query ({ caller }) func getMyCritters() : async [Critter] {
+    getCrittersByPrincipal(caller);
   };
 
 };

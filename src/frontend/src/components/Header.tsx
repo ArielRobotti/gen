@@ -14,6 +14,7 @@ const Header = () => {
   const [showModalRegister, setShowModalRegister] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [name, setName] = useState("");
+  const [codeInvite, setCodeInvite] = useState<string>("");
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -36,7 +37,6 @@ const Header = () => {
   }, [user, isAuthenticated, navigate, location.pathname]);
 
   const handleChangeName = (e: React.ChangeEvent<HTMLInputElement>) => {
-
     setName(e.target.value);
   };
 
@@ -47,8 +47,7 @@ const Header = () => {
 
   const handleRegister = async () => {
     if (name.length < 3 || name.length > 30) { return }
-    console.log("host")
-    const registerResult = await backend.signUp(name);
+    const registerResult = await backend.signUp({ name: name.trim() , code: (codeInvite.length > 0 ? [Number(codeInvite)] : []) });
 
     if ("Ok" in registerResult) {
       setShowModalRegister(false);
@@ -57,7 +56,6 @@ const Header = () => {
       updateUnreadMessages(registerResult.Ok.messagesPrev)
       setName("");
     }
-    console.log("Register result:", registerResult);
   }
 
   return (
@@ -93,7 +91,7 @@ const Header = () => {
                 <BellIcon onClick={handleClickBell} qty={notifications.filter(n => !n.read).length} className='mr-4' />
               </div>
               {showNotifications && (
-                <NotificationsPanel onClose={() => setShowNotifications(false)}/>
+                <NotificationsPanel onClose={() => setShowNotifications(false)} />
               )}
 
               <MenuUser />
@@ -132,6 +130,7 @@ const Header = () => {
               className="border p-2 w-full mb-2 rounded-full text-center"
             />
 
+
             <div className="text-sm flex items-center space-x-2">
               {name.length === 0 ? (
                 <span className="text-gray-500">Must be between 3 and 30 characters</span>
@@ -145,6 +144,24 @@ const Header = () => {
                 </>
               )}
             </div>
+            <input
+              type="text"
+              required
+              maxLength={10}
+              placeholder="Code Invite"
+              value={codeInvite}
+              onChange={(e) => {
+                const value = e.target.value;
+                const isValidInput = value === '' || (/^\d*$/.test(value) && value.length <= 10);
+                if (isValidInput) {
+                  setCodeInvite(value);
+                }
+              }}
+              className="ml-20 border p-2 w-[70%] mt-3 mb-3 rounded-full text-center appearance-none [-moz-appearance:_textfield] 
+                [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none 
+                [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none"
+            />
+
             <div className="flex justify-between px-[30px]">
               <button
                 style={{ backgroundColor: "#555555" }}

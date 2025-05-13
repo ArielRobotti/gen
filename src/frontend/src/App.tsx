@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "./layout/MainLayout";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
+// import Tokenomics from "./pages/Tokenomics";
 import Metrics from "./pages/Metrics";
 import Void from "./pages/Void"
 
@@ -22,6 +23,7 @@ function App() {
             <Route path="/metrics" element={<Metrics />} />
             <Route path="/space" element={<Void />} />
             <Route path="*" element={<Home />} />
+            {/* <Route path="/tokenomic" element={<Tokenomics language={"en"}/>}/> */}
           </Route>
         </Routes>
       </BrowserRouter>

@@ -73,6 +73,10 @@ const Menu = () => {
           <button className="block w-full text-left px-4 py-1 hover:bg-gray-500">Whitepaper</button>
         </div>
 
+        <div onMouseDown={() => handleMenuOption("/tokenomic")} className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
+          <button className="block w-full text-left px-4 py-1 hover:bg-gray-500">Tokenomic</button>
+        </div>
+
         <hr className=" border-gray-500" />
 
         <a href="https://internetcomputer.org/" target="blank" className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
