@@ -7,7 +7,7 @@ const MenuUser = () => {
   const menuRef = useRef<HTMLDivElement>(null);
   const [referralCode, setReferralCode] = useState("");
   const [showCode, setShowCode] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
+  const [copy, setCopy] = useState("");
 
   const navigate = useNavigate();
   const { logout, user, backend } = useSession();
@@ -53,27 +53,50 @@ const MenuUser = () => {
             className="fixed top-0 left-0 bg-black/90 w-full h-full "
             onClick={() => setShowCode(false)}
           />
+          <div className=" p-[1px] bg-green-500 rounded-4xl fixed top-[200px] left-1/2 transform -translate-x-1/2 shadow-[0px_0px_30px_rgba(85,_85,_85,_0.8)]">
+            <div
+              className="
+              bg-gray-900 hover:bg-gray-800 h-25 w-80 text-center text-green-400 text-[25px]
+              rounded-t-4xl flex flex-col items-center justify-center cursor-pointer mb-[1px]"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(referralCode); // Copia al portapapeles
+                  setCopy("Code");
+                  setTimeout(() => {
+                    setShowCode(false);
+                    setCopy("");
+                  }, 800);
+                } catch (error) {
+                  console.error("Error al copiar:", error);
+                  // Opcional: Mostrar un mensaje de error al usuario
+                }
+              }}
+            >
+              {referralCode}
+              <p className="text-[14px]">{copy === "Code" ?  "Copied!" : "Copy code"}</p>
+            </div>
 
-          <div
-            className="fixed top-[200px] left-1/2 transform -translate-x-1/2 
-              bg-gray-900 hover:bg-gray-800 h-25 w-60 text-center text-green-400 text-[25px]
-              rounded-2xl flex flex-col items-center justify-center cursor-pointer"
-            onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(referralCode); // Copia al portapapeles
-                setIsCopied(true);
-                setTimeout(() => {
-                  setShowCode(false);
-                  setIsCopied(false);
-                }, 800);
-              } catch (error) {
-                console.error("Error al copiar:", error);
-                // Opcional: Mostrar un mensaje de error al usuario
-              }
-            }}
-          >
-            {referralCode}
-            <p className="text-[14px]">{isCopied ? "Copied!" : "copy"}</p>
+            <div
+              className="
+              bg-gray-900 hover:bg-gray-800 h-25 w-80 text-center text-green-400 text-[18px]
+              rounded-b-4xl flex flex-col items-center justify-center cursor-pointer"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(`dnr7p-waaaa-aaaak-quhaq-cai.icp0.io/?ref=${referralCode}`); // Copia al portapapeles
+                  setCopy("Link");
+                  setTimeout(() => {
+                    setShowCode(false);
+                    setCopy("");
+                  }, 800);
+                } catch (error) {
+                  console.error("Error al copiar:", error);
+                  // Opcional: Mostrar un mensaje de error al usuario
+                }
+              }}
+            >
+              cryptocritters.com/?ref={referralCode}
+              <p className="text-[14px] mt-3">{copy === "Link" ? "Copied!" : "Copy link"}</p>
+            </div>
           </div>
         </>
       )}

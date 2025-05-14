@@ -1,17 +1,22 @@
-{
-    "short_name": "Crtpto Critters",
-    "name": "Cripto Critters",
+  {
+    "short_name": "CryptoCritters",
+    "name": "Crypto Critters",
     "icons": [
       {
-        "src": "smileCritter.svg",
-        "sizes": "64x64 32x32 24x24 16x16",
-        "type": "image/x-icon"
+        "src": "favicon.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "Logo-512x512.png",
+        "sizes": "512x512",
+        "type": "image/png"
       }
     ],
     "start_url": ".",
-    "text": "#DDDDDD",
     "display": "standalone",
     "theme_color": "#011830ce",
-    "background_color": "#011830ce"
+    "background_color": "#011830ce",
+    "orientation": "portrait"
   }
   

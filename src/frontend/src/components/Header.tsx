@@ -6,7 +6,7 @@ import MenuUser from './MenuUser';
 import LoginButton from './auth/LoginButton';
 import LogoutButton from './auth/LogoutButton';
 import RegisterButton from './register/RegisterButton';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { HomeIcon, BellIcon, MetricsIcon, MessageIcon } from "./Icons";
 
 const Header = () => {
@@ -16,7 +16,18 @@ const Header = () => {
   const [name, setName] = useState("");
   const [codeInvite, setCodeInvite] = useState<string>("");
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get('ref');
   const location = useLocation();
+
+  useEffect(() => {
+    if (referralCode) {
+      console.log('Código de referido:', referralCode);
+      setCodeInvite(referralCode);
+      // Guardar en localStorage o estado global (ej: Redux, Zustand)
+      // localStorage.setItem('referralCode', referralCode);
+    }
+  }, [referralCode]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -31,7 +42,9 @@ const Header = () => {
         setShowModalRegister(true);
         navigate("/")
       };
-    }, 3000);
+    }, 4000);
+    
+    if (user) {setShowModalRegister(false)}
 
     return () => clearTimeout(timeout);
   }, [user, isAuthenticated, navigate, location.pathname]);
@@ -63,7 +76,7 @@ const Header = () => {
       <header className="w-full flex justify-between items-center p-1 bg-gradient-to-t from-[#00000000] to-blue-800 pb-4 text-white select-none h-[60px]">
         <div className='flex items-center'>
           <Menu />
-          <MetricsIcon onClick={() => navigate("./metrics")} className='ml-2' />
+          <MetricsIcon onClick={() => navigate("./metrics")} className='ml-4' />
         </div>
 
 
@@ -149,7 +162,7 @@ const Header = () => {
               required
               maxLength={10}
               placeholder="Code Invite"
-              value={codeInvite}
+              value={referralCode? referralCode: codeInvite}
               onChange={(e) => {
                 const value = e.target.value;
                 const isValidInput = value === '' || (/^\d*$/.test(value) && value.length <= 10);

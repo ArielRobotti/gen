@@ -1,6 +1,6 @@
 import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { HttpAgent, Identity, AnonymousIdentity, ActorSubclass } from '@dfinity/agent';
-import { User, Notification, _SERVICE } from '../declarations/backend/backend.did';
+import { User, Notification, EconomyData, _SERVICE } from '../declarations/backend/backend.did';
 import { createActor } from "../declarations/backend";
 import { AuthClient } from '@dfinity/auth-client';
 import ModalProviderSelect from '../components/auth/ModalProviderSelect';
@@ -17,6 +17,7 @@ type SessionContextType = {
   user: User | null;
   notifications: Notification[];
   messagesPrev: MessagePreview[];
+  activityData: EconomyData[];
   identity: Identity;
   isAuthenticated: boolean;
   backend: ActorSubclass<_SERVICE>;
@@ -32,6 +33,7 @@ const defaultSessionContext: SessionContextType = {
   user: null,
   notifications: [],
   messagesPrev: [],
+  activityData: [],
   identity: new AnonymousIdentity(),
   isAuthenticated: false,
   backend: createActor(canisterId, {
@@ -43,6 +45,7 @@ const defaultSessionContext: SessionContextType = {
   updateNotifications: () =>{ },
   updateUnreadMessages: () => {},
   markNotificationAsRead: () => {},
+
 };
 
 export const SessionContext = createContext<SessionContextType>(defaultSessionContext);
@@ -55,6 +58,7 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [messagesPrev, setMessagesPrev] = useState<MessagePreview[]>([])
+  const [activityData, setActivityData] = useState<EconomyData[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [identity, setIdentity] = useState<Identity>(new AnonymousIdentity());
   const [backend, setBackend] = useState<ActorSubclass<_SERVICE>>(
@@ -85,6 +89,7 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
     setupAgent();
   }, [identity]);
 
+
   useEffect(() => {
     const getUser = async () => {
       const attempts = [
@@ -92,20 +97,23 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
         backend.signIn(),
         backend.signIn(),
       ];
-      try {
-        const dataUser = await Promise.any(attempts);
-        if ("Ok" in dataUser) {
-          setUser(dataUser.Ok.user);
-          setNotifications(dataUser.Ok.notifications);
-          setMessagesPrev(dataUser.Ok.messagesPrev);
-        } else {
-          setUser(null);
-          console.warn("Received non-Ok response");
+  
+      const results = await Promise.allSettled(attempts);
+
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+      
+        if (result.status === "fulfilled") {
+          const dataUser = result.value;
+          if ("Ok" in dataUser) {
+            setUser(dataUser.Ok.user);
+            setNotifications(dataUser.Ok.notifications);
+            setMessagesPrev(dataUser.Ok.messagesPrev);
+            setActivityData(dataUser.Ok.activityStatus);
+            console.log(`✅ Usuario encontrado en la llamada ${i}`);
+            break;
+          }
         }
-      } catch (error) {
-        // Todas fallaron
-        console.error("All signIn attempts failed", error);
-        setUser(null);
       }
     };
   
@@ -173,7 +181,7 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
   return (
     <SessionContext.Provider value={
       { 
-        user, notifications, messagesPrev, identity, backend, isAuthenticated, markNotificationAsRead,
+        user, notifications, activityData, messagesPrev, identity, backend, isAuthenticated, markNotificationAsRead,
         updateUser, updateNotifications,  updateUnreadMessages, login: handleLoginClick, logout }
       }
     >

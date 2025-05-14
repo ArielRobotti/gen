@@ -193,12 +193,11 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
     Principal.hash(p);
   };
 
-  func applyReferralProgram(code : Nat32, referred : Principal) : ?Principal {
+  func applyReferralProgram(code : Nat32, referred : Principal, nameReffered : Text) : ?Principal {
     let referralUser = Map.get<Nat32, Principal>(referralCodes, n32hash, code);
     switch referralUser {
       case null {};
       case (?referral) {
-        print("Referente: " # debug_show(referral));
         switch (Map.get<Principal, Types.EconomyData>(userInternalEconomyData, phash, referral)) {
           case null {
             let data : Types.EconomyData = {
@@ -206,7 +205,6 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
               referreds = [referred];
             };
             ignore Map.put<Principal, Types.EconomyData>(userInternalEconomyData, phash, referral, data);
-            print("Data guardada: " # debug_show(Map.get<Principal, Types.EconomyData>(userInternalEconomyData, phash, referral)));
           };
           case (?data) {
             let dataUpdated : Types.EconomyData = {
@@ -219,9 +217,9 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
               );
             };
             ignore Map.put<Principal, Types.EconomyData>(userInternalEconomyData, phash, referral, dataUpdated);
-            print("Data guardada: " # debug_show(Map.get<Principal, Types.EconomyData>(userInternalEconomyData, phash, referral)));
           };
-        }
+        };
+        pushNotification(referral, { date = now(); kind = #NewRefferal(nameReffered); read = false });
       };
     };
     return referralUser;
@@ -230,10 +228,20 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   public shared ({ caller }) func signUp({ name : Text; code : ?Nat32 }) : async Types.SignInResult {
+    assert (not Principal.isAnonymous(caller));
 
-    if (Map.get<Principal, User>(users, phash, caller) != null) {
-      return #Err("Caller is already User");
+    switch (Map.get<Principal, User>(users, phash, caller)) {
+      case ( ?user) {
+        return #Ok({
+          user;
+          notifications = getNotifications(caller);
+          activityStatus = Map.get<Principal, Types.EconomyData>(userInternalEconomyData, phash, caller);
+          messagesPrev : [{date : Int; sender : Text; title : Text}] = []; // TODO
+        })
+      };
+      case null {}
     };
+    
     let newUser : User = {
       Types.userDefault() with
       principal = caller;
@@ -246,7 +254,7 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
     switch code {
       case null {};
       case (?code) {
-        switch (applyReferralProgram(code, caller)) {
+        switch (applyReferralProgram(code, caller, name)) {
           case null {};
           case (?referralUser) {
             ignore Map.put<Principal, Types.EconomyData>(
@@ -257,7 +265,7 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
             );
           };
         };
-      }
+      };
     };
 
     #Ok({
@@ -273,6 +281,7 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
   };
 
   public shared query ({ caller }) func signIn() : async Types.SignInResult {
+    assert (not Principal.isAnonymous(caller));
     let user = Map.get<Principal, (User)>(users, phash, caller);
     switch user {
       case null { #Err("Caller is not a User") };

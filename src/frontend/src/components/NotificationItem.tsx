@@ -8,34 +8,31 @@ interface Props {
 }
 
 const NotificationItem = ({ notif, onClick }: Props) => {
-  const [id, setId] = useState<number | null>(null);
+  const [id, setId] = useState<bigint | null>(null);
   const { backend } = useSession();
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
 
   useEffect(() => {
     const kind = notif.kind;
     if ("MintingCompleted" in kind) {
-      setId(Number(kind.MintingCompleted));
+      setId(kind.MintingCompleted);
+      setTitle("Minting Completed");
+      setBody(`Your Critter has been successfully minted. Its Intergalactic Identity Document (IID) number is: ${kind.MintingCompleted}`);
     } else if ("ReproductionCompleted" in kind) {
-      setId(Number(kind.ReproductionCompleted));
+      setId(kind.ReproductionCompleted);
+      setTitle("Reproduction Completed");
+      setBody("");
     } else if ("CritterDied" in kind) {
-      setId(Number(kind.CritterDied));
+      setId(kind.CritterDied);
+      setTitle("Your Critter has passed away");
+      setBody(`Unfortunately we have to inform you that your Critter ${kind.CritterDied} has passed on to a more ethereal plane of existence.`)
+    } else if ("NewRefferal" in kind) {
+      setTitle("New user referral")
+      setBody(`Congratulations! The user "${kind.NewRefferal}" has just registered with their referral code. You have earned redeemable points.`)
+
     }
   }, [notif]);
-
-  const getNotificationText = () => {
-    const kind = notif.kind;
-    if ("Welcome" in kind) {
-      return "Welcome to Crypto Critters!";
-    } else if ("MintingCompleted" in kind) {
-      return `🐣 Your Critter #${kind.MintingCompleted} was successfully minted!!`;
-    } else if ("ReproductionCompleted" in kind) {
-      return `Your critter #${kind.ReproductionCompleted} has finished reproducing.`;
-    } else if ("CritterDied" in kind) {
-      return `Unfortunately, your critter #${kind.CritterDied} has died.`;
-    } else {
-      return "Unknown notification.";
-    }
-  };
 
   const handleClick = async () => {
     if (id !== null) {
@@ -52,14 +49,15 @@ const NotificationItem = ({ notif, onClick }: Props) => {
       onClick={handleClick}
       className={`px-4 py-3 border-b last:border-b-0 last:rounded-b-lg cursor-pointer ${
         notif.read
-          ? 'hover:bg-gray-800'
-          : 'bg-[#00ff0050] hover:bg-[#00ff0040]'
+          ? 'bg-gray-500 hover:bg-gray-700'
+          : 'bg-gray-800 hover:bg-gray-900'
       }`}
     >
       <div className="text-[11px] text-right text-gray-300">
         {new Date(Number(notif.date) / 1000000).toLocaleString()}
       </div>
-      <p className='text-[16px]'>{getNotificationText()}</p>
+      <p className='text-[16px]'>{title}</p>
+      <p className='text-[16px]'>{body}</p>
     </div>
   );
 };
