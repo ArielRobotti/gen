@@ -1,4 +1,8 @@
 {
+  "compilerOptions": {
+    "target": "ES2021",
+    "lib": ["DOM", "ES2021"]
+  },
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },

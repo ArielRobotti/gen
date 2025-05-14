@@ -1,32 +1,14 @@
-// src/components/GalaxyScene.tsx
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three-stdlib";
-
-// type GalaxySceneProps = {
-//   points: THREE.Vector3[];
-// };
 
 type GalaxySceneProps = {
   data: Uint8Array;
 };
 
-
-
 export const Critter: React.FC<GalaxySceneProps> = ({ data }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // const byteToFloat = (byte: number, scale = 1) => (byte / 255) * scale;
-  // const convertToPoints = (data: Uint8Array): THREE.Vector3[] => {
-  //   const vectors: THREE.Vector3[] = [];
-  //   for (let i = 0; i + 2 < data.length; i += 3) {
-  //     const x = byteToFloat(data[i], 20) - 10;  // rango [-10, 10]
-  //     const y = byteToFloat(data[i + 1], 20) - 10;
-  //     const z = byteToFloat(data[i + 2], 20) - 10;
-  //     vectors.push(new THREE.Vector3(x, y, z).normalize().multiplyScalar(Math.random() * 0.5 + 9.5));
-  //   }
-  //   return vectors;
-  // };
   const pseudoRandom = (seed: number) =>
     Math.sin(seed * 1337.1) * 43758.5453 % 1;
 
@@ -39,7 +21,6 @@ export const Critter: React.FC<GalaxySceneProps> = ({ data }) => {
 
       const index = i / 3;
 
-      // Agregar ruido determinístico por índice
       const dx = pseudoRandom(index) * 0.2 - 0.1;
       const dy = pseudoRandom(index + 1) * 0.2 - 0.1;
       const dz = pseudoRandom(index + 2) * 0.2 - 0.1;
@@ -52,7 +33,6 @@ export const Critter: React.FC<GalaxySceneProps> = ({ data }) => {
     }
     return vectors;
   };
-
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -105,34 +85,34 @@ export const Critter: React.FC<GalaxySceneProps> = ({ data }) => {
     geometry.setAttribute("shift", new THREE.Float32BufferAttribute(shift, 4));
 
     const material = new THREE.PointsMaterial({
-      size: 0.3,
+      size: 0.6,
       transparent: true,
       depthTest: false,
       blending: THREE.AdditiveBlending,
-      color: 0xbbbbff
+      color: 'rgb(200, 230, 255)',
     } as THREE.PointsMaterialParameters);
 
-    
+
     const createCircleTexture = () => {
       const canvas = document.createElement('canvas');
-      canvas.width = 8;
-      canvas.height = 8;
+      canvas.width = 16
+      canvas.height = 16
       const ctx = canvas.getContext('2d')!;
-      
-      const gradient = ctx.createRadialGradient(4, 4, 0, 4, 4, 4);
-      gradient.addColorStop(0, 'white');
-      gradient.addColorStop(1, 'rgba(30, 255, 0, 0.4)');
-      
+
+      const gradient = ctx.createRadialGradient(2, 2, 0, 4, 4, 4);
+      gradient.addColorStop(0, 'rgb(39, 248, 32)');
+      gradient.addColorStop(1, 'rgba(255, 255, 255, 00)');
+
       ctx.fillStyle = gradient;
       ctx.beginPath();
       ctx.arc(4, 4, 4, 0, Math.PI * 2);
       ctx.fill();
-      
+
       const texture = new THREE.CanvasTexture(canvas);
       texture.needsUpdate = true;
       return texture;
     };
-    
+
     material.alphaMap = createCircleTexture();
 
 
@@ -141,15 +121,74 @@ export const Critter: React.FC<GalaxySceneProps> = ({ data }) => {
     pointsMesh.rotation.z = 0.2;
     scene.add(pointsMesh);
 
+    // Crear geometría de la esfera central
+    const sphereGeometry = new THREE.SphereGeometry(2, 64);
+
+    // Crear material estilo plasma (puedes cambiar color e intensidad aquí)
+
+
+    const centerColor = `rgba(${data[3]/2}, ${data[1]/2}, ${data[4]/2}, 255)`;
+    const finalColor = `rgba(${data[2]}, ${data[7]}, ${data[1]}, 255)`
+
+    // Crear canvas y contexto
+    const canvas: HTMLCanvasElement = document.createElement('canvas');
+    canvas.width = canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) throw new Error('No se pudo obtener el contexto del canvas');
+
+    // Crear gradiente radial
+    const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+    gradient.addColorStop(0, centerColor); // Color dinámico en el centro
+    gradient.addColorStop(1, finalColor); // Transición hacia transparente
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Crear textura desde el canvas
+    const emissiveTexture = new THREE.CanvasTexture(canvas);
+
+    // Crear material con emissiveMap
+    const sphereMaterial = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color(0x000000), // oscuro para resaltar el brillo
+      emissive: new THREE.Color(0xffffff), // blanco, usamos el mapa para definir forma
+      emissiveMap: emissiveTexture,
+      emissiveIntensity: 2.5,
+      metalness: 0.6,
+      roughness: 0.1,
+      clearcoat: 1,
+      clearcoatRoughness: 0.05,
+      transmission: 0.6,
+      transparent: true,
+      opacity: 0.9,
+    });
+
+    // Crear la malla y agregarla a la escena
+    const centralSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    centralSphere.position.set(0, 0, 0);
+    scene.add(centralSphere);
+
+    // Añadir una luz para que se vea el efecto físico
+    const pointLight = new THREE.PointLight(0xffffff, 1.5);
+    pointLight.position.set(5, 5, 5);
+    scene.add(pointLight);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
     const clock = new THREE.Clock();
 
     const animate = () => {
       requestAnimationFrame(animate);
       controls.update();
-      const t = clock.getElapsedTime() * 0.5;
+      const t = clock.getElapsedTime() * 2.5;
       gu.time.value = t * Math.PI;
       pointsMesh.rotation.y = t * 0.05;
       renderer.render(scene, camera);
+      const scale = 1 + Math.sin(t * 2) * 0.125;
+      centralSphere.scale.set(scale, scale, scale);
+
+
     };
     animate();
 
@@ -167,13 +206,14 @@ export const Critter: React.FC<GalaxySceneProps> = ({ data }) => {
     window.addEventListener("resize", onResize);
 
     return () => {
-      window.removeEventListener("resize", onResize);
-      containerRef.current?.removeChild(renderer.domElement);
+      if (renderer.domElement.parentNode) {
+        renderer.domElement.parentNode.removeChild(renderer.domElement);
+      }
     };
   }, [data]);
 
   return (
-    <div className="w-full max-w-[500px] aspect-square mx-auto" 
+    <div className="w-full max-w-[500px] aspect-square mx-auto"
       ref={containerRef}>
 
     </div>
