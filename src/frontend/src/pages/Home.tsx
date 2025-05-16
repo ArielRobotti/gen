@@ -72,9 +72,15 @@ const Home = () => {
     }
     setTextMintButton("Minting");
     const mintResult = await backend.mintCritter({ genomeLength: BigInt(4 * 1024), transactionId: BigInt(0) });
+    console.log(mintResult)
     if("Err" in mintResult) {
-      if( mintResult. Err === 'The Caller is minting a Critter right now'){
-        setTextMintButton("Minting!!!");
+      console.log(mintResult.Err)
+      if(mintResult.Err === "Minting limit per account") {
+        setTextMintButton("Minting Limit Per Account");
+      } else if (mintResult.Err ===  "Maximum per day exceeded"){
+        setTextMintButton("Maximum per day exceeded");
+      } else if( mintResult.Err === 'The Caller is minting a Critter right now'){
+        setTextMintButton("¡¡¡ Minting !!!");
       }
     } else {
       setTextMintButton("¡Bring your own Critter to life!")
@@ -117,7 +123,8 @@ const Home = () => {
         </div>
       </section>
       <div 
-        className="flex w-[315px] text-lg text-white mt-12 p-4 rounded-[70px] animate-heartbeat bg-[#022469d0] hover:bg-[#123479] transition duration-300 shadow-lg cursor-pointer"
+        className="flex w-[315px] text-lg text-white mt-12 p-4 rounded-[70px] animate-heartbeat bg-[#022469d0] 
+        hover:bg-[#123479] transition duration-300 cursor-pointer"
         onClick={handleClickMint}
       >
         <button>

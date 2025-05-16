@@ -32,13 +32,16 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
   stable var admins : [Principal] = [Deployer];
 
   stable let critters = Map.new<CritterId, Critter>();
-  // stable var crittersByGeneration: [{generation: Nat; births: Nat; deaths: Nat}] = [];
   stable let crittersByGeneration = Map.new<Nat, { births : Nat; deaths : Nat }>();
   stable var recordBirths = List.nil<(Int, Nat)>();
   stable var recordDeaths = List.nil<(Int, Nat)>();
   stable var lastCritterId = 0;
 
-  stable let usersMinting = Set.new<Principal>();
+  let usersMinting = Set.new<Principal>();
+
+  /////////////////////////////////////// Configuration variables ////////////////////////////////////////////
+
+  stable var maxMintingPerDayPerAccount = 5;
 
   /////////////////////////////////////// Admin functions ////////////////////////////////////////////////////
 
@@ -51,27 +54,65 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
     if (not isAdmin) { return };
     admins := Array.tabulate<Principal>(admins.size() + 1, func x = if (x < admins.size()) { admins[x] } else { a });
   };
+  
+  public shared ({ caller }) func setLimitPerDay(l: Nat): async {#Ok}{
+    assert(isAdmin(caller));
+    maxMintingPerDayPerAccount := l;
+    #Ok
+  };
+
+  public query func getLimitPerDay(): async Nat{
+    maxMintingPerDayPerAccount;
+  };
+
+  
 
   public shared query func info() : async Types.PublicInfo {
     {
       usersQty = Map.size(users);
       adminsQty = admins.size();
       crittersByGeneration = Map.toArray<Nat, { births : Nat; deaths : Nat }>(crittersByGeneration);
-      birthsLastWeek = getBirthsByPeriod(now() - NanoSecPerDay * 7, now());
-      deathsLastWeek = getDeathsByPeriod(now() - NanoSecPerDay * 7, now());
+      birthsLastWeek = getBirthsFromDaysAgo(7);
+      deathsLastWeek = getKillsFromDaysAgo(7);
+      birthsLastDay = getBirthsFromDaysAgo(1);
+      deathsLastDay = getKillsFromDaysAgo(1);
+      birthsLastMonth = getBirthsFromDaysAgo(30);
+      deathsLastMonth = getKillsFromDaysAgo(30);
     };
   };
 
-  public shared ({ caller }) func resetAll() : async { #Ok; #Err } {
-    if (not isAdmin(caller)) { return #Err };
-    Map.clear(users);
-    Map.clear(critters);
-    Map.clear(crittersByGeneration);
-    Map.clear(deletedUsers);
-    recordBirths := List.nil<(Int, Nat)>();
-    recordDeaths := List.nil<(Int, Nat)>();
-    lastCritterId := 0;
-    #Ok;
+  // public shared ({ caller }) func resetAll() : async { #Ok; #Err } {
+  //   if (not isAdmin(caller)) { return #Err };
+  //   Map.clear(users);
+  //   Map.clear(critters);
+  //   Map.clear(crittersByGeneration);
+  //   Map.clear(deletedUsers);
+  //   recordBirths := List.nil<(Int, Nat)>();
+  //   recordDeaths := List.nil<(Int, Nat)>();
+  //   lastCritterId := 0;
+  //   #Ok;
+  // };
+
+  public shared query ({ caller }) func getMetadataCritters(): async [Types.CritterMetadata]{
+    assert(isAdmin(caller));
+    Iter.toArray(Map.vals<CritterId, Critter>(critters));
+  };
+
+  public shared query func critterBalanceOf(p: Principal): async Nat {
+    var result = 0;
+    for (critter in Map.vals(critters)) {
+      if(critter.owner == p) {
+        result += 1;
+      }
+    };
+    result
+  };
+
+  public query func getMetadataFrom(p: Principal): async [Types.CritterMetadata]{
+    Array.filter<Types.CritterMetadata>(Iter.toArray(
+      Map.vals<CritterId, Critter>(critters)),
+      func x = x.owner == p
+    );
   };
 
   public shared query ({ caller }) func getUsers() : async [User] {
@@ -127,17 +168,47 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
     return false;
   };
 
-  func getBirthsByPeriod(start : Int, end : Int) : Nat {
-    // TODO
-    0;
+  
+
+  public func mintQtyLastDay(p: Principal): async Nat {
+    let dataArray = Iter.toArray<{dateBorn: Int; owner: Principal}>(Map.vals<Nat, Critter>(critters));
+    var i = dataArray.size() - 1: Nat;
+    var minted = 0;
+    while (i >= 0) {
+      if (now() < dataArray[i].dateBorn  + 24 * 60 * 60 * 1_000_000_000) {
+        if (p == dataArray[i].owner ) { minted += 1 };
+      } else {
+        return minted;
+      };
+      i -= 1;
+    };
+    return minted
   };
 
-  func getDeathsByPeriod(start : Int, end : Int) : Nat {
-    //TODO
-    0;
+  func getBirthsFromDaysAgo(days: Nat) : Nat {
+    let dataArray = Iter.toArray<{dateBorn: Int; owner: Principal}>(Map.vals<Nat, Critter>(critters));
+    var counter = 0;
+    var i = dataArray.size() - 1: Nat;
+    while (i > 0) {
+      if ( now() < dataArray[i].dateBorn + 24 * 60 * 60 * 1_000_000_000 * days) {
+        counter += 1;
+      } else {
+        return counter;
+      };
+      i -= 1;
+    };
+    counter
   };
 
-  func registerBirth(timestamp : Int, generation : Nat) {
+  func getKillsFromDaysAgo(days: Nat) : Nat {
+    var counter = 0;
+    
+    counter
+
+  };
+
+  func registerBirth(timestamp : Int, generation : Nat, id: Nat) {
+    ignore List.push<(Int, Nat)>((timestamp, id), recordBirths);
     let prevStatus = Map.get<Nat, { births : Nat; deaths : Nat }>(crittersByGeneration, nhash, generation);
     switch prevStatus {
       case null {
@@ -180,11 +251,7 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
     };
   };
 
-  func getUnReadMessages(p : Principal) : [{
-    title : Text;
-    sender : Text;
-    date : Int;
-  }] {
+  func getUnReadMessages(p : Principal) : [Types.PrevMsg] {
     // TODO
     [];
   };
@@ -228,7 +295,9 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   public shared ({ caller }) func signUp({ name : Text; code : ?Nat32 }) : async Types.SignInResult {
-    assert (not Principal.isAnonymous(caller));
+    if (Principal.isAnonymous(caller)) {
+      return #Err("Anonymous caller")
+    };
 
     switch (Map.get<Principal, User>(users, phash, caller)) {
       case ( ?user) {
@@ -281,7 +350,9 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
   };
 
   public shared query ({ caller }) func signIn() : async Types.SignInResult {
-    assert (not Principal.isAnonymous(caller));
+    if (Principal.isAnonymous(caller)) {
+      return #Err("Anonymous caller")
+    };
     let user = Map.get<Principal, (User)>(users, phash, caller);
     switch user {
       case null { #Err("Caller is not a User") };
@@ -298,6 +369,7 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
   };
 
   public shared ({ caller }) func generateReferralCode() : async Nat32 {
+    assert(not Principal.isAnonymous(caller));
     let code = getReferralCode(caller);
     ignore Map.put<Nat32, Principal>(referralCodes, n32hash, code, caller);
     code;
@@ -347,7 +419,7 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
         read = false;
       },
     );
-    registerBirth(now(), 0);
+    registerBirth(now(), 0, newCritter.id);
     lastCritterId;
   };
 
@@ -360,17 +432,27 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
     Set.has<Principal>(usersMinting, phash, user);
   };
 
-  public shared ({ caller }) func mintCritter({
-    transactionId : Nat;
-    genomeLength : Nat;
-  }) : async { #Err : Text; #Ok : CritterId } {
+  public shared ({ caller }) func mintCritter({ transactionId : Nat; genomeLength : Nat}) : async Types.MintResult {
     let user = Map.get<Principal, User>(users, phash, caller);
+
+    if(Principal.isAnonymous(caller)){ 
+      return #Err("Anonymous caller") 
+    };
+
+    ////// Quitar cuando se complete el flujo de minteo de pago
+    if((await mintQtyLastDay(caller)) >= maxMintingPerDayPerAccount) {
+      return #Err("Maximum per day exceeded")
+    };
+
+    ///////////////////////////////////////////////////////////
+
     switch user {
       case null { return #Err("Caller is not a user") };
       case (?user) {
         if (not verifyTransaction(transactionId)) {
           return #Err("Transaction not verified");
         };
+
         if (userIsMinting(caller)) {
           return #Err("The Caller is minting a Critter right now");
         };
@@ -463,8 +545,8 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
 
     ignore Map.put<Nat, Critter>(critters, nhash, a.id, { a with childs = updateChidsA });
     ignore Map.put<Nat, Critter>(critters, nhash, b.id, { b with childs = updateChidsB });
-    registerBirth(now(), generation);
-
+    registerBirth(now(), generation, newCritter1.id);
+    registerBirth(now(), generation, newCritter2.id);
     (newCritter1.id, newCritter2.id);
 
   };

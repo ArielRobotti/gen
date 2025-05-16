@@ -45,7 +45,7 @@ module{
 
     public type CritterId = Nat;
 
-    public type Critter = {
+    public type CritterMetadata = {
         id: CritterId;
         name: Text;
         parent_a: CritterId;
@@ -55,6 +55,9 @@ module{
         generation: Nat;
         owner: Principal;
         ownershipRecord: OwnershipRecord;
+    };
+
+    public type Critter = CritterMetadata and {
         genome: Genome;
     };
 
@@ -112,10 +115,31 @@ module{
             {
                 user: User; 
                 notifications: [Notification];
-                messagesPrev: [{sender: Text; title: Text; date: Int}];
+                messagesPrev: [PrevMsg];
                 activityStatus: ?EconomyData;
             }
         );
+        #Err: Text;
+    };
+
+    public type PrevMsg = {sender: Text; title: Text; date: Int};
+
+    public type Msg = PrevMsg and {
+        content: Text;
+        multimedia: {
+            mimeType: Text;
+            data: Blob; // 1.5 MB Max
+        }
+    };
+
+    public type Chat = {
+        id: Nat32;
+        name: Text;
+        msgs: [Msg];
+    };
+ 
+    public type MintResult = {
+        #Ok: CritterId;
         #Err: Text;
     };
 
@@ -125,6 +149,10 @@ module{
         crittersByGeneration: [(Nat, {births : Nat; deaths : Nat})];
         birthsLastWeek: Nat;
         deathsLastWeek: Nat;
+        birthsLastDay: Nat;
+        deathsLastDay: Nat;
+        birthsLastMonth: Nat;
+        deathsLastMonth: Nat;
     };
 
 

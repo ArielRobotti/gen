@@ -10,7 +10,7 @@ import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { HomeIcon, BellIcon, MetricsIcon, MessageIcon } from "./Icons";
 
 const Header = () => {
-  const { user, notifications, messagesPrev, isAuthenticated, identity, backend, updateUser, updateNotifications, updateUnreadMessages } = useSession();
+  const { user, notifications, messagesPrev, isAuthenticated, identity, activityData, backend, updateUser, updateNotifications, updateUnreadMessages } = useSession();
   const [showModalRegister, setShowModalRegister] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [name, setName] = useState("");
@@ -83,7 +83,7 @@ const Header = () => {
         <div className="absolute left-1/2 transform -translate-x-1/2 text-center">
           <h1
             onClick={() => navigate("./")}
-            className="hidden sm:block text-[18px] sm:text-2xl font-bold cursor-pointer"
+            className="hidden sm:block text-[34px] font-bold cursor-pointer "
           >
             Crypto Critters
           </h1>
@@ -108,6 +108,10 @@ const Header = () => {
               )}
 
               <MenuUser />
+              <div className='absolute top-[60px] right-5'>
+                <span className='mr-3'>Balance CRT: </span>
+                <span>{activityData.length > 0 ? Number(activityData[0].balanceCRT).toFixed(4): 0.00.toFixed(4)}</span>
+                </div>
             </>
           ) : (
             <>
