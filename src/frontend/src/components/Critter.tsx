@@ -9,6 +9,17 @@ type GalaxySceneProps = {
 export const Critter: React.FC<GalaxySceneProps> = ({ data }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const getColorHiContrast = (r: number, g: number, b: number, contrast: number) => {
+    const avg = (r + g + b) / 3;
+    const newR = Math.min(255, Math.max(0, avg + (r - avg) * contrast))
+    const newG = Math.min(255, Math.max(0, avg + (g - avg) * contrast));
+    const newB = Math.min(255, Math.max(0, avg + (b - avg) * contrast));
+    return `rgba(${newR}, ${newG}, ${newB}, 1)`
+  }
+  
+  const centerColor = getColorHiContrast(data[4]/2, data[14]/2, data[16]/2, 1.5);
+  const finalColor = getColorHiContrast(data[405], data[784], data[455], 2);
+
   const pseudoRandom = (seed: number) =>
     Math.sin(seed * 1337.1) * 43758.5453 % 1;
 
@@ -127,8 +138,7 @@ export const Critter: React.FC<GalaxySceneProps> = ({ data }) => {
     // Crear material estilo plasma (puedes cambiar color e intensidad aquí)
 
 
-    const centerColor = `rgba(${data[3]/2}, ${data[1]/2}, ${data[4]/2}, 255)`;
-    const finalColor = `rgba(${data[2]}, ${data[7]}, ${data[1]}, 255)`
+    
 
     // Crear canvas y contexto
     const canvas: HTMLCanvasElement = document.createElement('canvas');
@@ -213,8 +223,13 @@ export const Critter: React.FC<GalaxySceneProps> = ({ data }) => {
   }, [data]);
 
   return (
-    <div className="w-full max-w-[500px] aspect-square mx-auto"
-      ref={containerRef}>
+    <div 
+      className={`w-full max-w-[500px] aspect-square mx-auto`}
+      ref={containerRef}
+      style={{
+        filter: `drop-shadow(0px 0px 10px rgba(241, 244, 245,1)`
+      }}
+    >
 
     </div>
   );

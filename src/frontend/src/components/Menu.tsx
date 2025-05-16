@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { BugerMenuIcon, GithubIcon } from "./Icons"
+import { BugerMenuIcon, GithubIcon, YouTubeIcon } from "./Icons"
 import { useNavigate } from 'react-router-dom';
 
 const Menu = () => {
@@ -66,7 +66,7 @@ const Menu = () => {
         <hr className=" border-gray-500" />
 
         <div onMouseDown={() => handleMenuOption("/")} className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
-          <button className="block w-full text-left px-4 py-1 hover:bg-gray-500">RoutMap</button>
+          <button className="block w-full text-left px-4 py-1 hover:bg-gray-500">Roadmap</button>
         </div>
 
         <div onMouseDown={() => handleMenuOption("/")} className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
@@ -83,10 +83,6 @@ const Menu = () => {
           <div className="block w-full text-left px-4 py-1 hover:bg-gray-500">Internet Computer</div>
         </a>
 
-        <div onMouseDown={() => handleMenuOption("/")} className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
-          <button className="block w-full text-left px-4 py-1 hover:bg-gray-500">Soport</button>
-        </div>
-
         <div className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
           <a
             href="mailto:info.cryptocritters@gmail.com"
@@ -96,8 +92,13 @@ const Menu = () => {
           </a>
         </div>
 
-        <a href="https://github.com/ArielRobotti/gen" target="blank" className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
-          <div className="block w-full text-left px-4 py-1 hover:bg-gray-500"><GithubIcon className=''/></div>
+
+        <a href="https://github.com/ArielRobotti/gen" target="blank" className="flex items-center justify-between py-1  rounded-full">
+          <div className="block w-full h-[40px] text-left px-4 py-1 hover:bg-gray-500 rounded-lg"><GithubIcon className=''/></div>
+        </a>
+
+        <a href="https://www.youtube.com/@CryptoCritterMultiverse" target="blank" className="flex items-center justify-between py-1 rounded-full">
+          <div className="block w-full text-left px-4 py-1 mb-2 hover:bg-gray-500 rounded-lg"><YouTubeIcon className=''/></div>
         </a>
 
       </div>
