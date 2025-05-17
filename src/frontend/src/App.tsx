@@ -9,10 +9,11 @@ import Metrics from "./pages/Metrics";
 import Void from "./pages/Void"
 
 import './App.css';
+import Tutorials from "./pages/Tutorials";
 
 function App() {
   return (
-    <div className="h-[400vh]">
+    <div className="h-[300vh]">
 
     <SessionProvider>
       <BrowserRouter>
@@ -23,6 +24,7 @@ function App() {
             <Route path="/metrics" element={<Metrics />} />
             <Route path="/space" element={<Void />} />
             <Route path="*" element={<Home />} />
+            <Route path="/tutorials" element={<Tutorials />} />
             {/* <Route path="/tokenomic" element={<Tokenomics language={"en"}/>}/> */}
           </Route>
         </Routes>

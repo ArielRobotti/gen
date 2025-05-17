@@ -51,7 +51,7 @@ const Menu = () => {
           <button className="block w-full text-left px-4 py-1 hover:bg-gray-500">About Crypto Critters</button>
         </div>
 
-        <div onMouseDown={() => handleMenuOption("/")} className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
+        <div onMouseDown={() => handleMenuOption("/tutorials")} className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
           <button className="block w-full text-left px-4 py-1 hover:bg-gray-500">Tutorials</button>
         </div>
 

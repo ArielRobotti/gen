@@ -26,13 +26,14 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
   let NanoSecPerDay : Int = 24 * 60 * 60 * 1_000_000_000;
 
   stable let users = Map.new<Principal, User>();
-  stable var userRegistrationsPerDay = List.nil<Nat>();
+  stable var userRegistrationsPerDay = List.nil<Int>();
   stable let notificationsMap = Map.new<Principal, [Notification]>();
   stable let userInternalEconomyData = Map.new<Principal, Types.EconomyData>();
   stable let referralCodes = Map.new<Nat32, Principal>();
   stable let deletedUsers = Map.new<Principal, User>();
 
   stable var admins : [Principal] = [Deployer];
+  stable var tutorials: [Text] = [];
 
   stable let critters = Map.new<CritterId, Critter>();
   stable let crittersByGeneration = Map.new<Nat, { births : Nat; deaths : Nat }>();
@@ -70,7 +71,7 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
 
   public shared ({ caller }) func buildCounterUserIncoming() : async () {
     assert (isAdmin(caller));
-    let days = Buffer.fromArray<Nat>([]);
+    let days = Buffer.fromArray<Int>([]);
     let iterRegister = Map.vals(users);
     let firstRegistryDay = switch (iterRegister.next()) {
       case null { 0 : Int };
@@ -80,7 +81,7 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
       };
     };
     var userCounter = 1;
-    var currentDay = 0 : Int;
+    var currentDay = 0 : Nat;
 
     for ({ registrationDate } in iterRegister) {
       userCounter += 1;
@@ -88,10 +89,19 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
         days.add(userCounter);
         currentDay += 1;
       };
-      days.put(Int.abs(currentDay), days.get(Int.abs(currentDay)) + 1);
+      days.put(currentDay, days.get(currentDay) + 1);
     };
-    userRegistrationsPerDay := List.fromArray(Buffer.toArray<Nat>(days))
+    userRegistrationsPerDay := List.fromArray(Buffer.toArray<Int>(days))
 
+  };
+
+  public shared ({ caller }) func setTutorials(t: [Text]): async () {
+    assert (isAdmin(caller));
+    tutorials := t;
+  };
+
+  public query func getTutorials(): async [Text] {
+    tutorials;
   };
 
   public shared query func info() : async Types.PublicInfo {
@@ -215,6 +225,7 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
   };
 
   func getBirthsFromDaysAgo(days : Nat) : Nat {
+    if(Map.size(critters) == 0) return 0;
     let dataArray = Iter.toArray<{ dateBorn : Int; owner : Principal }>(Map.vals<Nat, Critter>(critters));
     var counter = 0;
     var i = dataArray.size() - 1 : Nat;
@@ -275,6 +286,7 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
   };
 
   func buildMintCounter() : [Nat] {
+    if(Map.size(critters) == 0) return [];
     let iterCritters = Map.vals<CritterId, Critter>(critters);
     let days = Buffer.fromArray<Nat>([]);
     var counterMint = 0;
@@ -351,15 +363,18 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
     return referralUser;
   };
 
-  func logRegistry(date : Int) {
-    let last = switch (List.last<Nat>(userRegistrationsPerDay)) {
-      case null { 0 };
+  func logRegistry() {
+    let last = switch (List.last<Int>(userRegistrationsPerDay)) {
+      case null { Int.abs(now()) };
       case (?last) { last };
     };
-    while (List.size(userRegistrationsPerDay) * NanoSecPerDay < date) {
-      ignore List.push<Nat>(last, userRegistrationsPerDay);
+
+    var biasDay = (now() - last) / NanoSecPerDay;
+    while (biasDay < 0) {
+      ignore List.push<Int>(last, userRegistrationsPerDay);
+      biasDay -= 1;
     };
-    ignore List.push<Nat>(last + 1, userRegistrationsPerDay);
+    ignore List.push<Int>(last + 1, userRegistrationsPerDay);
 
     // if (date > lastDayStart)
   };
@@ -393,7 +408,7 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
       crittersId = [];
     };
     ignore Map.put<Principal, User>(users, phash, caller, newUser);
-    logRegistry(now());
+    logRegistry();
     switch code {
       case null {};
       case (?code) {
