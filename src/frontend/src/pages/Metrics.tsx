@@ -1,24 +1,18 @@
 import { useEffect, useState } from "react";
 import { useSession } from "../context/sessionContext";
 import { PublicInfo } from "../declarations/backend/backend.did"
+import Line  from "../components/graphics/Line";
 
-const safeStringify = (data: unknown, indent = 2) => {
-  return JSON.stringify(data, (_, value) =>
-    typeof value === 'bigint' ? value.toString() : value
-    , indent);
-};
 
 const Metrics = () => {
   const { backend } = useSession();
   const [metrics, setMetrics] = useState<PublicInfo | null>(null);
 
   useEffect(() => {
-    console.log("Efecutando efecto")
+  
     const fetchInfo = async () => {
       if (backend) {
-        console.log("Hay backend")
         const info = await backend.info();
-        console.log(info)
         setMetrics(info);
       }
     };
@@ -28,18 +22,29 @@ const Metrics = () => {
 
   return (
   <>
-    {backend && metrics === null && (
-      <div className="text-white p-4">Cargando métricas...</div>
+    {backend && metrics === null &&  (
+      <div className="text-white p-2 text-center">Loading metrics ...</div>
     )}
     {metrics && (
-      <div className="min-h-screen p-4 flex flex-col items-center justify-center animate-fade-in">
-        <h2 className="text-2xl text-white font-bold mb-6">Platform public metrics</h2>
-        <div className="bg-gray-800/20 p-6 rounded-lg max-w-[600px] w-full border border-gray-700">
-          <pre className="text-gray-200 overflow-x-auto text-sm font-mono">
-            {safeStringify(metrics)}
-          </pre>
+      <> 
+      <h1 className="text-white text-[26px] text-center mt-10">Statistic</h1>
+        <div className="flex flex-col lg:flex-row min-h-screen mt-10 items-center animate-fade-in ">
+          
+          <Line
+            data={metrics.userRegistrationsPerDay}
+            note={`Current Users:  ${metrics.usersQty}`}
+            title={"User registered chart"}  
+            />
+
+          <Line
+            data={metrics.mintPerDay}
+            note={`Total Supply:  ${metrics.mintPerDay[metrics.mintPerDay.length -1]}`}
+            title={"Critters minted chart"}  
+            />
         </div>
-      </div>
+      </>
+
+      
     )}
   </>
 );

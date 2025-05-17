@@ -11,6 +11,8 @@ import { now } "mo:base/Time";
 import { print } "mo:base/Debug";
 import Iter "mo:base/Iter";
 import Principal "mo:base/Principal";
+import Buffer "mo:base/Buffer";
+import Int "mo:base/Int";
 
 shared ({ caller = Deployer }) actor class CriptoCritters() = self {
 
@@ -24,6 +26,7 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
   let NanoSecPerDay : Int = 24 * 60 * 60 * 1_000_000_000;
 
   stable let users = Map.new<Principal, User>();
+  stable var userRegistrationsPerDay = List.nil<Nat>();
   stable let notificationsMap = Map.new<Principal, [Notification]>();
   stable let userInternalEconomyData = Map.new<Principal, Types.EconomyData>();
   stable let referralCodes = Map.new<Nat32, Principal>();
@@ -54,22 +57,48 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
     if (not isAdmin) { return };
     admins := Array.tabulate<Principal>(admins.size() + 1, func x = if (x < admins.size()) { admins[x] } else { a });
   };
-  
-  public shared ({ caller }) func setLimitPerDay(l: Nat): async {#Ok}{
-    assert(isAdmin(caller));
+
+  public shared ({ caller }) func setLimitPerDay(l : Nat) : async { #Ok } {
+    assert (isAdmin(caller));
     maxMintingPerDayPerAccount := l;
-    #Ok
+    #Ok;
   };
 
-  public query func getLimitPerDay(): async Nat{
+  public query func getLimitPerDay() : async Nat {
     maxMintingPerDayPerAccount;
   };
 
-  
+  public shared ({ caller }) func buildCounterUserIncoming() : async () {
+    assert (isAdmin(caller));
+    let days = Buffer.fromArray<Nat>([]);
+    let iterRegister = Map.vals(users);
+    let firstRegistryDay = switch (iterRegister.next()) {
+      case null { 0 : Int };
+      case (?val) {
+        days.add(1);
+        (val.registrationDate / NanoSecPerDay) * NanoSecPerDay;
+      };
+    };
+    var userCounter = 1;
+    var currentDay = 0 : Int;
+
+    for ({ registrationDate } in iterRegister) {
+      userCounter += 1;
+      while (registrationDate > firstRegistryDay + currentDay * NanoSecPerDay) {
+        days.add(userCounter);
+        currentDay += 1;
+      };
+      days.put(Int.abs(currentDay), days.get(Int.abs(currentDay)) + 1);
+    };
+    userRegistrationsPerDay := List.fromArray(Buffer.toArray<Nat>(days))
+
+  };
 
   public shared query func info() : async Types.PublicInfo {
     {
       usersQty = Map.size(users);
+      mintPerDay = buildMintCounter();
+      userRegistrationsPerDay = List.toArray(userRegistrationsPerDay);
       adminsQty = admins.size();
       crittersByGeneration = Map.toArray<Nat, { births : Nat; deaths : Nat }>(crittersByGeneration);
       birthsLastWeek = getBirthsFromDaysAgo(7);
@@ -93,25 +122,27 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
   //   #Ok;
   // };
 
-  public shared query ({ caller }) func getMetadataCritters(): async [Types.CritterMetadata]{
-    assert(isAdmin(caller));
+  public shared query ({ caller }) func getMetadataCritters() : async [Types.CritterMetadata] {
+    assert (isAdmin(caller));
     Iter.toArray(Map.vals<CritterId, Critter>(critters));
   };
 
-  public shared query func critterBalanceOf(p: Principal): async Nat {
+  public shared query func critterBalanceOf(p : Principal) : async Nat {
     var result = 0;
     for (critter in Map.vals(critters)) {
-      if(critter.owner == p) {
+      if (critter.owner == p) {
         result += 1;
-      }
+      };
     };
-    result
+    result;
   };
 
-  public query func getMetadataFrom(p: Principal): async [Types.CritterMetadata]{
-    Array.filter<Types.CritterMetadata>(Iter.toArray(
-      Map.vals<CritterId, Critter>(critters)),
-      func x = x.owner == p
+  public query func getMetadataFrom(p : Principal) : async [Types.CritterMetadata] {
+    Array.filter<Types.CritterMetadata>(
+      Iter.toArray(
+        Map.vals<CritterId, Critter>(critters)
+      ),
+      func x = x.owner == p,
     );
   };
 
@@ -168,46 +199,44 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
     return false;
   };
 
-  
-
-  public func mintQtyLastDay(p: Principal): async Nat {
-    let dataArray = Iter.toArray<{dateBorn: Int; owner: Principal}>(Map.vals<Nat, Critter>(critters));
-    var i = dataArray.size() - 1: Nat;
+  public func mintQtyLastDay(p : Principal) : async Nat {
+    let dataArray = Iter.toArray<{ dateBorn : Int; owner : Principal }>(Map.vals<Nat, Critter>(critters));
+    var i = dataArray.size() - 1 : Nat;
     var minted = 0;
     while (i >= 0) {
-      if (now() < dataArray[i].dateBorn  + 24 * 60 * 60 * 1_000_000_000) {
-        if (p == dataArray[i].owner ) { minted += 1 };
+      if (now() < dataArray[i].dateBorn + 24 * 60 * 60 * 1_000_000_000) {
+        if (p == dataArray[i].owner) { minted += 1 };
       } else {
         return minted;
       };
       i -= 1;
     };
-    return minted
+    return minted;
   };
 
-  func getBirthsFromDaysAgo(days: Nat) : Nat {
-    let dataArray = Iter.toArray<{dateBorn: Int; owner: Principal}>(Map.vals<Nat, Critter>(critters));
+  func getBirthsFromDaysAgo(days : Nat) : Nat {
+    let dataArray = Iter.toArray<{ dateBorn : Int; owner : Principal }>(Map.vals<Nat, Critter>(critters));
     var counter = 0;
-    var i = dataArray.size() - 1: Nat;
+    var i = dataArray.size() - 1 : Nat;
     while (i > 0) {
-      if ( now() < dataArray[i].dateBorn + 24 * 60 * 60 * 1_000_000_000 * days) {
+      if (now() < dataArray[i].dateBorn + 24 * 60 * 60 * 1_000_000_000 * days) {
         counter += 1;
       } else {
         return counter;
       };
       i -= 1;
     };
-    counter
+    counter;
   };
 
-  func getKillsFromDaysAgo(days: Nat) : Nat {
+  func getKillsFromDaysAgo(days : Nat) : Nat {
     var counter = 0;
-    
+
     counter
 
   };
 
-  func registerBirth(timestamp : Int, generation : Nat, id: Nat) {
+  func registerBirth(timestamp : Int, generation : Nat, id : Nat) {
     ignore List.push<(Int, Nat)>((timestamp, id), recordBirths);
     let prevStatus = Map.get<Nat, { births : Nat; deaths : Nat }>(crittersByGeneration, nhash, generation);
     switch prevStatus {
@@ -240,8 +269,38 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
         );
       };
     };
+
     // TODO Send email in case
     ignore Map.put<Principal, [Notification]>(notificationsMap, phash, to, updateNotifications);
+  };
+
+  func buildMintCounter() : [Nat] {
+    let iterCritters = Map.vals<CritterId, Critter>(critters);
+    let days = Buffer.fromArray<Nat>([]);
+    var counterMint = 0;
+
+    let firstMintDay = switch (iterCritters.next()) {
+      case null { 0 : Int };
+      case (?val) {
+        counterMint += 1;
+        days.add(1);
+        (val.dateBorn / NanoSecPerDay) * NanoSecPerDay;
+      };
+    };
+    
+    var currentDay = 0 : Int;
+    
+    for ({ dateBorn; generation } in iterCritters) {
+      
+      while (dateBorn > firstMintDay + currentDay * NanoSecPerDay ) {
+        currentDay += 1;
+        days.add(counterMint)
+      };
+      counterMint += if(generation == 0) 1 else 0;
+      days.put(Int.abs(currentDay), counterMint);
+    };
+    Buffer.toArray<Nat>(days);
+
   };
 
   func getNotifications(p : Principal) : [Notification] {
@@ -292,25 +351,40 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
     return referralUser;
   };
 
+  func logRegistry(date : Int) {
+    let last = switch (List.last<Nat>(userRegistrationsPerDay)) {
+      case null { 0 };
+      case (?last) { last };
+    };
+    while (List.size(userRegistrationsPerDay) * NanoSecPerDay < date) {
+      ignore List.push<Nat>(last, userRegistrationsPerDay);
+    };
+    ignore List.push<Nat>(last + 1, userRegistrationsPerDay);
+
+    // if (date > lastDayStart)
+  };
+
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   public shared ({ caller }) func signUp({ name : Text; code : ?Nat32 }) : async Types.SignInResult {
+    print("a");
     if (Principal.isAnonymous(caller)) {
-      return #Err("Anonymous caller")
+      return #Err("Anonymous caller");
     };
-
+    //// En caso de que ya sea usuario ////////////////////
     switch (Map.get<Principal, User>(users, phash, caller)) {
-      case ( ?user) {
+      case (?user) {
         return #Ok({
           user;
           notifications = getNotifications(caller);
           activityStatus = Map.get<Principal, Types.EconomyData>(userInternalEconomyData, phash, caller);
-          messagesPrev : [{date : Int; sender : Text; title : Text}] = []; // TODO
-        })
+          messagesPrev : [{ date : Int; sender : Text; title : Text }] = []; // TODO
+        });
       };
-      case null {}
+      case null {};
     };
-    
+    ///////////////////////////////////////////////////////
+
     let newUser : User = {
       Types.userDefault() with
       principal = caller;
@@ -319,7 +393,7 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
       crittersId = [];
     };
     ignore Map.put<Principal, User>(users, phash, caller, newUser);
-
+    logRegistry(now());
     switch code {
       case null {};
       case (?code) {
@@ -351,7 +425,7 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
 
   public shared query ({ caller }) func signIn() : async Types.SignInResult {
     if (Principal.isAnonymous(caller)) {
-      return #Err("Anonymous caller")
+      return #Err("Anonymous caller");
     };
     let user = Map.get<Principal, (User)>(users, phash, caller);
     switch user {
@@ -369,7 +443,7 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
   };
 
   public shared ({ caller }) func generateReferralCode() : async Nat32 {
-    assert(not Principal.isAnonymous(caller));
+    assert (not Principal.isAnonymous(caller));
     let code = getReferralCode(caller);
     ignore Map.put<Nat32, Principal>(referralCodes, n32hash, code, caller);
     code;
@@ -432,16 +506,19 @@ shared ({ caller = Deployer }) actor class CriptoCritters() = self {
     Set.has<Principal>(usersMinting, phash, user);
   };
 
-  public shared ({ caller }) func mintCritter({ transactionId : Nat; genomeLength : Nat}) : async Types.MintResult {
+  public shared ({ caller }) func mintCritter({
+    transactionId : Nat;
+    genomeLength : Nat;
+  }) : async Types.MintResult {
     let user = Map.get<Principal, User>(users, phash, caller);
 
-    if(Principal.isAnonymous(caller)){ 
-      return #Err("Anonymous caller") 
+    if (Principal.isAnonymous(caller)) {
+      return #Err("Anonymous caller");
     };
 
     ////// Quitar cuando se complete el flujo de minteo de pago
-    if((await mintQtyLastDay(caller)) >= maxMintingPerDayPerAccount) {
-      return #Err("Maximum per day exceeded")
+    if ((await mintQtyLastDay(caller)) >= maxMintingPerDayPerAccount) {
+      return #Err("Maximum per day exceeded");
     };
 
     ///////////////////////////////////////////////////////////

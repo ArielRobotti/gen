@@ -145,6 +145,8 @@ module{
 
     public type PublicInfo = {
         usersQty: Nat;
+        userRegistrationsPerDay: [Nat];
+        mintPerDay: [Nat];
         adminsQty: Nat;
         crittersByGeneration: [(Nat, {births : Nat; deaths : Nat})];
         birthsLastWeek: Nat;
