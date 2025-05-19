@@ -1,6 +1,6 @@
 
 import { useSession } from "../context/sessionContext";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 // import {Critter} from "../components/Critter";
 // import { arrayBuffer } from "stream/consumers";
 // import * as THREE from "three";
@@ -48,6 +48,9 @@ const Home = () => {
   //     });
   //   }
   // }, []);
+  useEffect(() => {
+    if (!isAuthenticated) { setTextMintButton("¡Bring your own Critter to life!") }
+  }, [isAuthenticated])
 
   const togglePlayLore = () => {
     const audio = audioRef.current;

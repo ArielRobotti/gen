@@ -11,7 +11,10 @@ const ModalProviderSelect: React.FC<CustomModalProps> = ({ isOpen, internetIdent
 	if (!isOpen) return null;
 	return (
 		<div className="modal-overlay" onClick={onClose}>
-			<div className="absolute top-[10px] right-[10px] bg-[#222233] rounded-[10px] p-5 w-[350px]" onClick={(e) => e.stopPropagation()}>
+			<div 
+				className="absolute top-[10px] right-auto sm:right-[10px] bg-[#222233] rounded-[10px] p-5 w-[350px]" 
+				onClick={(e) => e.stopPropagation()}
+			>
 				<h2 className='mb-10 text-white text-[20px] text-center'>Choose an Identity Provider</h2>
 				<div className="button !h-10 !flex !mb-4 !items-center !justify-center">
 					
