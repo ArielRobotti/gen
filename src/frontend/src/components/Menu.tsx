@@ -55,27 +55,36 @@ const Menu = () => {
           <button className="block w-full text-left px-4 py-1 hover:bg-gray-500">Tutorials</button>
         </div>
 
-        <div onMouseDown={() => handleMenuOption("/metrics")} className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
-          <button className="block w-full text-left px-4 py-1 hover:bg-gray-500">Statistics</button>
-        </div>
-
         <div onMouseDown={() => handleMenuOption("/")} className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
-          <button className="block w-full text-left px-4 py-1 hover:bg-gray-500">Community</button>
+          <button className="block w-full text-left px-4 py-1 hover:bg-gray-500">Whitepaper</button>
         </div>
-
-        <hr className=" border-gray-500" />
 
         <div onMouseDown={() => handleMenuOption("/")} className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
           <button className="block w-full text-left px-4 py-1 hover:bg-gray-500">Roadmap</button>
         </div>
 
-        <div onMouseDown={() => handleMenuOption("/")} className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
-          <button className="block w-full text-left px-4 py-1 hover:bg-gray-500">Whitepaper</button>
-        </div>
-
         <div onMouseDown={() => handleMenuOption("/tokenomic")} className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
           <button className="block w-full text-left px-4 py-1 hover:bg-gray-500">Tokenomic</button>
         </div>
+
+        <hr className=" border-gray-500" />
+
+        <div onMouseDown={() => handleMenuOption("/metrics")} className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
+          <button className="block w-full text-left px-4 py-1 hover:bg-gray-500">Statistics</button>
+        </div>
+
+        <div className="flex items-center justify-between py-1 hover:bg-gray-500 rounded-lg">
+          <a
+            href="https://discord.gg/xtMajMYH"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full text-left px-4 py-1 hover:bg-gray-500"
+          >
+            Discord Server
+          </a>
+        </div>
+
+        
 
         <hr className=" border-gray-500" />
 
